@@ -5,10 +5,17 @@ import numpy as np
 import re
 from joblib import load
 import pdb
-
-
+from flask_caching import Cache
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+# Configuration de Flask-Caching
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémoire
+
+# charger traitement et modele 
+pipeline = load('C:\\Users\\naoue\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\mlruns\\models\\mon_pipeline_complet.joblib')
+
 ######################
 @app.route('/')
 def home():
@@ -28,6 +35,7 @@ def clean_feature_names_two(df):
     clean_names = {col: re.sub(r'[^\w\s]', '_', col) for col in df.columns}
     return df.rename(columns=clean_names)
 
+@cache.memoize(timeout=300)  # Met en cache le résultat pour 300 secondes
 # charger que les données utiles
 def load_client_data(client_id, client_data_path):
     # Charger l'intégralité du fichier CSV en mémoire
@@ -42,9 +50,6 @@ def load_client_data(client_id, client_data_path):
 
 # Charger le préprocesseur
 #preprocessor = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_2\\mlruns\\models\\preprocessor.joblib')
-
-# charger traitement et modele 
-pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_2\\mlruns\\models\\mon_pipeline_complet.joblib')
 
 #client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_2\\données_pour_model.csv'
 
@@ -75,7 +80,7 @@ def get_client_info():
     client_id = content['client_id']
 
     # Chemin vers votre fichier de données
-    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_2\\données_pour_model.csv'
+    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
     
     # Utilisation de la fonction pour charger les données spécifiques du client
     client_info = load_client_data(client_id, client_data_path)
@@ -88,17 +93,32 @@ def get_client_info():
 
 #####################
 @app.route('/predict', methods=['POST'])
+
 def predict():
     content = request.json
-    client_data = pd.DataFrame([content])
-    cleaned_data = preprocess_data(client_data)
-    #pdb.set_trace()
-    prediction = pipeline.predict(cleaned_data)
+    try:
+        # Assurez-vous que client_id est un entier
+        client_id = int(content['client_id'])
+    except (ValueError, TypeError, KeyError):
+        # Retourner une erreur si la conversion échoue ou si client_id est manquant
+        return jsonify({'error': 'client_id doit être un entier'}), 400
+
+    # Chemin vers votre fichier de données (ajustez selon votre configuration)
+    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
+
+    # Charger les données complètes du client
+    client_data = load_client_data(client_id, client_data_path)
     
-    print(cleaned_data.columns)
-    #processed_data = preprocessor.transform(cleaned_data)  # Transformation des données avec le préprocesseur chargé
-    #prediction = lgbm_object.predict(processed_data)
-    # Supposons que la prédiction renvoie 1 pour un risque de défaut et 0 sinon
+    # Si aucune donnée n'est trouvée pour le client_id donné, renvoyez une erreur
+    if client_data.empty:
+        return jsonify({'error': 'Client not found'}), 404
+
+    # Prétraiter les données du client
+    cleaned_data = preprocess_data(client_data)
+
+    # Faire la prédiction avec le pipeline
+    #prediction = pipeline.predict(cleaned_data)
+    prediction = pipeline.predict(cleaned_data).tolist()  # Convertir en liste
     result = {"prediction": int(prediction[0])}
     return jsonify(result)
 
