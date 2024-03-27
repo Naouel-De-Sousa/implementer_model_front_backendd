@@ -20,7 +20,6 @@ st.markdown(html_temp, unsafe_allow_html=True)
 # Utiliser st.markdown pour colorier le titre
 #st.markdown("<h1 style='color: blue;'>Risque de défaut de crédit à la consommation</h1>", unsafe_allow_html=True)
 
-#st.title('Insights Client: Scores et Synthèses')
 
 # header/subheader
 st.header('Objectif du Dashboard')
@@ -28,50 +27,95 @@ st.header('Objectif du Dashboard')
 
 # Text
 st.write("Ce dashboard offre une plateforme interactive permettant une analyse approfondie et une visualisation intuitive des profils clients.\n\nConçu pour être accessible aux non-experts en data science, il fournit des scores détaillés et des interprétations claires pour chaque client, enrichissant la compréhension sans nécessiter de connaissances techniques approfondies.")
-# Plot
 
-#Number of loans in the sample
 #########################
 
         
 # Formulaire pour saisir l'ID client
-client_id_input = st.text_input('Entrez l\'ID client:', '')
 
-# Lorsque l'utilisateur appuie sur le bouton 'Prédire'
+client_id_input = st.text_input('Entrez l\'ID client:', '', key='unique_client_id_input_key')
+
+# set the prediction result
+def display_prediction_result(prediction):
+    if prediction == 1:
+        st.markdown("<h2 style='color: red;'>Risque de défaut détecté : Refus de crédit</h2>", unsafe_allow_html=True)
+    else:
+        st.markdown("<h2 style='color: green;'>Pas de risque de défaut détecté : Accord de crédit</h2>", unsafe_allow_html=True)
+if 'prediction_result' in st.session_state:
+    display_prediction_result(st.session_state['prediction_result'])
+
+# bouton predire
+
 if st.button('Prédire'):
     if client_id_input:
-        # Envoyer une requête à l'API Flask
-        response = requests.post('http://localhost:5000/predict', json={'client_id': client_id_input})
-        
-        if response.status_code == 200:
-            # Afficher la prédiction
-            prediction = response.json()['prediction']
-            if prediction == 1:
-                st.write("Risque de défaut détecté : Refus de crédit")
+        client_id_valid = True
+
+        try:
+            client_id_int = int(client_id_input)
+        except ValueError:
+            st.error("L'ID client doit être un nombre entier.")
+            client_id_valid = False
+
+        if client_id_valid:
+            response = requests.post('http://localhost:5000/predict', json={'client_id': client_id_int})
+            if response.status_code == 200:
+                prediction = response.json()['prediction']
+                # Ici, on suppose que votre API renvoie aussi 'feature_importances' avec la prédiction
+                feature_importances = response.json().get('feature_importances', {})
+
+                # Stocker le résultat de la prédiction dans st.session_state
+                st.session_state['prediction_result'] = prediction
+                display_prediction_result(prediction)  # Afficher le résultat avec une fonction dédiée
+
+                if feature_importances:
+                    # Afficher les informations d'importance des features
+                    df_importances = pd.DataFrame(list(feature_importances.items()), columns=['Feature', 'Importance'])
+                    df_importances = df_importances.sort_values('Importance', ascending=True)
+                    
+                    st.write("Importance des Features :")
+                    st.bar_chart(df_importances.set_index('Feature')['Importance'])
             else:
-                st.write("Pas de risque de défaut détecté : Accord de crédit")
-        else:
-            st.error('Une erreur est survenue lors de la prédiction.')
+                st.error('Une erreur est survenue lors de la prédiction.')
     else:
         st.error("Veuillez entrer un ID client.")
 
 
-# Lorsque l'utilisateur appuie sur le bouton pour récupérer les informations du client
+
+
+# boutton Lorsque l'utilisateur appuie sur le bouton pour récupérer les informations du client
 if st.button('Obtenir les informations du client'):
     if client_id_input:
-        # Envoyer une requête à l'endpoint `/get-client-info` de l'API Flask
-        response = requests.post('http://localhost:5000/get-client-info', json={'client_id': int(client_id_input)})
-        
-        if response.status_code == 200:
-            # Si la requête est réussie, afficher les informations
-            client_info = response.json()
-            st.write("Informations du client :")
-            st.json(client_info)  # Affichage des informations du client sous forme de JSON dans l'interface
-        else:
-            st.error("Client non trouvé ou erreur dans l'API.")
+        try:
+            # Convertir l'ID client en entier pour éviter les erreurs
+            client_id_int = int(client_id_input)
+        except ValueError:
+            st.error("L'ID client doit être un nombre entier.")
+            client_id_int = None
+
+        if client_id_int is not None:
+            # Envoyer une requête à l'endpoint `/get-client-info` de l'API Flask
+            response = requests.post('http://localhost:5000/get-client-info', json={'client_id': client_id_int})
+            
+            if response.status_code == 200:
+                # Si la requête est réussie, afficher les informations
+                client_info = response.json()
+                
+                
+                # Permettre à l'utilisateur de sélectionner une feature à visualiser
+                feature = st.selectbox('Sélectionnez une feature à visualiser:', list(client_info.keys()))
+                
+                # Afficher la valeur pour la feature sélectionnée en fonction de son type
+                if isinstance(client_info[feature], (int, float)):
+                    # Pour les données numériques, créer un petit DataFrame et l'afficher sous forme de graphique
+                    df = pd.DataFrame([client_info[feature]], columns=[feature])
+                    st.bar_chart(df)
+                else:
+                    # Pour les autres types de données, les afficher comme texte
+                    st.write(f"Valeur de {feature}: {client_info[feature]}")
+            else:
+                st.error("Client non trouvé ou erreur dans l'API.")
     else:
         st.error("Veuillez entrer un ID client.")
-        
         # ## features importance
     # # Imprimer les étapes du pipeline
     #for name, model in lgbm_object.named_steps.items():
