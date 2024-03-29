@@ -28,25 +28,28 @@ st.header('Objectif du Dashboard')
 # Text
 st.write("Ce dashboard offre une plateforme interactive permettant une analyse approfondie et une visualisation intuitive des profils clients.\n\nConçu pour être accessible aux non-experts en data science, il fournit des scores détaillés et des interprétations claires pour chaque client, enrichissant la compréhension sans nécessiter de connaissances techniques approfondies.")
 
-#########################
 
-        
-# Formulaire pour saisir l'ID client
 
-client_id_input = st.text_input('Entrez l\'ID client:', '', key='unique_client_id_input_key')
+######################### Formulaire pour saisir l'ID client
 
-# set the prediction result
+# Fonction pour afficher le résultat de la prédiction
 def display_prediction_result(prediction):
     if prediction == 1:
         st.markdown("<h2 style='color: red;'>Risque de défaut détecté : Refus de crédit</h2>", unsafe_allow_html=True)
     else:
         st.markdown("<h2 style='color: green;'>Pas de risque de défaut détecté : Accord de crédit</h2>", unsafe_allow_html=True)
-if 'prediction_result' in st.session_state:
+
+# Initialisation d'une variable pour suivre si 'Prédire' a été cliqué sans entrée valide
+if 'predict_clicked' not in st.session_state:
+    st.session_state['predict_clicked'] = False
+
+client_id_input = st.text_input('Entrez l\'ID client:', '', key='unique_client_id_input_key')
+
+if 'prediction_result' in st.session_state and st.session_state['predict_clicked']:
     display_prediction_result(st.session_state['prediction_result'])
 
-# bouton predire
-
 if st.button('Prédire'):
+    st.session_state['predict_clicked'] = True  # Marquer que l'utilisateur a tenté une prédiction
     if client_id_input:
         client_id_valid = True
 
@@ -60,88 +63,83 @@ if st.button('Prédire'):
             response = requests.post('http://localhost:5000/predict', json={'client_id': client_id_int})
             if response.status_code == 200:
                 prediction = response.json()['prediction']
-                # Ici, on suppose que votre API renvoie aussi 'feature_importances' avec la prédiction
-                feature_importances = response.json().get('feature_importances', {})
 
                 # Stocker le résultat de la prédiction dans st.session_state
                 st.session_state['prediction_result'] = prediction
                 display_prediction_result(prediction)  # Afficher le résultat avec une fonction dédiée
+                # Sauvegarder l'ID du client sélectionné dans st.session_state
+                st.session_state['selected_client_id'] = client_id_int
 
-                if feature_importances:
-                    # Afficher les informations d'importance des features
-                    df_importances = pd.DataFrame(list(feature_importances.items()), columns=['Feature', 'Importance'])
-                    df_importances = df_importances.sort_values('Importance', ascending=True)
-                    
-                    st.write("Importance des Features :")
-                    st.bar_chart(df_importances.set_index('Feature')['Importance'])
-            else:
-                st.error('Une erreur est survenue lors de la prédiction.')
+        else:
+            st.error('Une erreur est survenue lors de la prédiction.')
     else:
-        st.error("Veuillez entrer un ID client.")
+        # Afficher l'erreur seulement si 'Prédire' a été cliqué sans ID
+        if st.session_state['predict_clicked']:
+            st.error("Veuillez entrer un ID client.")
 
 
 
-
-# boutton Lorsque l'utilisateur appuie sur le bouton pour récupérer les informations du client
-if st.button('Obtenir les informations du client'):
-    if client_id_input:
-        try:
-            # Convertir l'ID client en entier pour éviter les erreurs
-            client_id_int = int(client_id_input)
-        except ValueError:
-            st.error("L'ID client doit être un nombre entier.")
-            client_id_int = None
-
-        if client_id_int is not None:
-            # Envoyer une requête à l'endpoint `/get-client-info` de l'API Flask
-            response = requests.post('http://localhost:5000/get-client-info', json={'client_id': client_id_int})
+#################### Bouton pour récupérer toutes les données et afficher le plot
             
-            if response.status_code == 200:
-                # Si la requête est réussie, afficher les informations
-                client_info = response.json()
-                
-                
-                # Permettre à l'utilisateur de sélectionner une feature à visualiser
-                feature = st.selectbox('Sélectionnez une feature à visualiser:', list(client_info.keys()))
-                
-                # Afficher la valeur pour la feature sélectionnée en fonction de son type
-                if isinstance(client_info[feature], (int, float)):
-                    # Pour les données numériques, créer un petit DataFrame et l'afficher sous forme de graphique
-                    df = pd.DataFrame([client_info[feature]], columns=[feature])
-                    st.bar_chart(df)
-                else:
-                    # Pour les autres types de données, les afficher comme texte
-                    st.write(f"Valeur de {feature}: {client_info[feature]}")
-            else:
-                st.error("Client non trouvé ou erreur dans l'API.")
+# Exemple de chargement des données (mettez à jour selon votre logique de chargement)
+if 'data' not in st.session_state or st.button('Charger les données'):
+    response = requests.get('http://localhost:5000/get-all-client-info')
+    if response.status_code == 200:
+        all_client_data = response.json()
+        df = pd.DataFrame(all_client_data)
+        st.session_state['data'] = df
     else:
-        st.error("Veuillez entrer un ID client.")
-        # ## features importance
-    # # Imprimer les étapes du pipeline
-    #for name, model in lgbm_object.named_steps.items():
-    #     print(name, model)
+        st.error("Impossible de récupérer les données.")
 
-    # lgbm_model = lgbm_object.named_steps['classifier']
+# Si les données sont chargées
+if 'data' in st.session_state:
+    df = st.session_state['data']
+    # Choix de la variable pour le plot
+    variable_choice = st.selectbox('Choisir une variable pour le plot:', df.columns)
 
-    # feature_importances = lgbm_model.feature_importances_
+    # Option pour inclure les informations du client sélectionné
+    include_client_info = st.checkbox("Inclure les informations du client sélectionné dans le graphique")
+
+     # Vérifier si la variable sélectionnée est de type numérique
+    if not pd.api.types.is_numeric_dtype(df[variable_choice]):
+        st.warning('Veuillez choisir une variable de type numérique.')
+    else:
+        # Création du plot pour les variables numériques
+        fig, ax = plt.subplots()
+        ax.hist(df[variable_choice].dropna(), bins=50,label='Distribution générale')  # Suppression des NaN pour éviter des erreurs de plot
+        if include_client_info and 'selected_client_id' in st.session_state:
+            # Récupération des données du client sélectionné
+            client_id = st.session_state['selected_client_id']
+            client_info = df[df['SK_ID_CURR'] == client_id]  # Assurez-vous que 'client_id' est la bonne clé
+    
+            if not client_info.empty:
+                client_value = client_info[variable_choice].iloc[0]
+                ax.axvline(client_value, color='r', linestyle='--', label='Client sélectionné')
+                ax.legend()
+
+        ax.set_ylabel('Fréquence')
+        ax.set_xlabel(variable_choice)
+        ax.set_title(f'Distribution de {variable_choice}')
+        st.pyplot(fig)  # Affiche le plot dans Streamlit
 
 
-    # df_feature_importances = pd.DataFrame({
-    #     'Feature': feature_names,  # Assurez-vous que cette liste correspond à votre ensemble de données après transformation
-    #     'Importance': feature_importances
-    # }).sort_values('Importance', ascending=False)
 
-    # # Affichage du graphique
-    # plt.figure(figsize=(10, 6))
-    # plt.barh(df_feature_importances['Feature'][:10], df_feature_importances['Importance'][:10], color='skyblue')
-    # plt.xlabel('Importance')
-    # plt.ylabel('Feature')
-    # plt.title('Top 10 Feature Importances')
-    # plt.gca().invert_yaxis()
-    # plt.tight_layout()
 
-    # st.pyplot(plt)
 
-    # # Vérifier si le nombre d'importances correspond au nombre de noms de caractéristiques
-    # print('this is an error')
-    # assert len(feature_importances) == len(feature_names)
+
+
+
+
+
+ ############# shap
+
+#if st.button('Analyse SHAP'):
+    #client_id = st.text_input('Entrez l\'ID du client pour l\'analyse SHAP')
+    #response = requests.get(f'http://localhost:5000/shap-analysis/{client_id}')
+    #if response.status_code == 200:
+     #   data = response.json()
+      #  st.image(data['url'], caption='Analyse SHAP')
+#else:
+    #st.error('Erreur lors de la récupération de l\'analyse SHAP')
+
+        
