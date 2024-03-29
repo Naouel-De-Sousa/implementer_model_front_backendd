@@ -7,6 +7,8 @@ from joblib import load
 import pdb
 from flask_caching import Cache
 from flask_cors import CORS
+import matplotlib.pyplot as plt
+import shap
 
 app = Flask(__name__)
 CORS(app)
@@ -35,7 +37,9 @@ def clean_feature_names_two(df):
     clean_names = {col: re.sub(r'[^\w\s]', '_', col) for col in df.columns}
     return df.rename(columns=clean_names)
 
+#réduire la charge sur le serveur pour des requêtes répétées
 @cache.memoize(timeout=300)  # Met en cache le résultat pour 300 secondes
+
 # charger que les données utiles
 def load_client_data(client_id, client_data_path):
     # Charger l'intégralité du fichier CSV en mémoire
@@ -43,19 +47,12 @@ def load_client_data(client_id, client_data_path):
     # Filtrer les données pour obtenir uniquement l'entrée correspondant à l'ID client spécifié
     filtered_data = data[data['SK_ID_CURR'] == client_id]
     return filtered_data
-  # Retourner un DataFrame vide si l'ID n'est pas trouvé
-# Charger le modèle 
-#with open('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_2\\mlruns\\models\\lightgbm_model.pkl', 'rb') as file:
-    #lgbm_object = pickle.load(file)
 
-# Charger le préprocesseur
-#preprocessor = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_2\\mlruns\\models\\preprocessor.joblib')
+ 
 
-#client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_2\\données_pour_model.csv'
 
-#data_client_global = pd.read_csv(client_data_path)
 
-# Fonctions de traitement des données
+############## Fonctions de traitement des données
 def preprocess_data(data):
     # Remplacer les infinis par NaN
     data = replace_infinities(data)
@@ -68,30 +65,10 @@ def preprocess_data(data):
     # Nettoyer les noms des caractéristiques
     data_cleaned = clean_feature_names(data)
     data_final = clean_feature_names_two(data_cleaned)
-
     return data_final
 
 
-#####################
-@app.route('/get-client-info', methods=['POST'])
-
-def get_client_info():
-    content = request.json
-    client_id = content['client_id']
-
-    # Chemin vers votre fichier de données
-    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
-    
-    # Utilisation de la fonction pour charger les données spécifiques du client
-    client_info = load_client_data(client_id, client_data_path)
-    
-    if not client_info.empty:
-        return jsonify(client_info.to_dict(orient='records')[0])
-    else:
-        return jsonify({'error': 'Client not found'}), 404
-    
-
-#####################
+#####################prediction
 @app.route('/predict', methods=['POST'])
 
 def predict():
@@ -122,5 +99,70 @@ def predict():
     result = {"prediction": int(prediction[0])}
     return jsonify(result)
 
+
+############### all client info
+@app.route('/get-all-client-info', methods=['GET'])  # Utiliser GET puisqu'on ne soumet pas de données
+def get_all_client_info():
+    # Chemin vers votre fichier de données
+    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
+    
+    # Charger les données complètes
+    client_data = pd.read_csv(client_data_path)
+    
+    # Sélectionner les colonnes désirées, si nécessaire
+    # Exemple : sélectionner les 20 premières colonnes
+    client_data = client_data.iloc[:,:20]  # Optionnel, selon votre besoin
+    
+    # Convertir le DataFrame en dictionnaire pour le jsonify
+    # Utiliser orient='records' pour obtenir une liste de dictionnaires
+    data_dict = client_data.to_dict(orient='records')
+    
+    return jsonify(data_dict)
+
+
+#####################
+@app.route('/get-client-info', methods=['POST'])
+
+def get_client_info():
+    content = request.json
+    client_id = content['client_id']
+    # Chemin vers votre fichier de données
+    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
+    # Utilisation de la fonction pour charger les données spécifiques du client
+    client_info = load_client_data(client_id, client_data_path)
+    if not client_info.empty:
+        # Sélectionner les 20 premières colonnes
+        client_info = client_info.iloc[:,:20]  # Utilise .iloc pour sélectionner les colonnes par position
+        # Renvoyer les informations du client spécifiquement demandées
+        return jsonify(client_info.to_dict(orient='records')[0])
+    else:
+        return jsonify({'error': 'Client not found'}), 404
+    
+
+
+""" ################ Shap
+@app.route('/calculate-shap', methods=['POST'])
+def shap_analysis(client_id):
+    client_data = load_client_data(client_id, "C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv")
+    if client_data.empty:
+        return jsonify({'error': 'Client not found'}), 404
+    
+    # Préparation des données pour SHAP
+    cleaned_data = preprocess_data(client_data)
+    X_transformed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
+    feature_names_transformed = pipeline.named_steps['preprocessor'].get_feature_names_out()
+
+    # Calcul des valeurs SHAP
+    explainer = shap.TreeExplainer(pipeline.named_steps['classifier'])
+    shap_values = explainer.shap_values(X_transformed)
+
+    # Génération du plot
+    shap.summary_plot(shap_values, features=X_transformed, feature_names = feature_names_transformed ,show=False)
+    plot_path = f"static/shap_plot_{client_id}.png"
+    plt.savefig(plot_path)
+    plt.close()
+    return jsonify({"url": f"{request.host_url}{plot_path}"}) """
+
+
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
