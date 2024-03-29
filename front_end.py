@@ -125,21 +125,17 @@ if 'data' in st.session_state:
 
 
 
-
-
-
-
-
-
  ############# shap
 
-#if st.button('Analyse SHAP'):
-    #client_id = st.text_input('Entrez l\'ID du client pour l\'analyse SHAP')
-    #response = requests.get(f'http://localhost:5000/shap-analysis/{client_id}')
-    #if response.status_code == 200:
-     #   data = response.json()
-      #  st.image(data['url'], caption='Analyse SHAP')
-#else:
-    #st.error('Erreur lors de la récupération de l\'analyse SHAP')
+if st.button('Analyse SHAP'):
+    client_id = st.text_input('Entrez l\'ID du client pour l\'analyse SHAP', '')
+    if client_id:  # Assurez-vous que l'ID client est fourni
+        response = requests.post('http://localhost:5000/calculate-shap', json={'client_id': client_id})
+        if response.status_code == 200:
+            data = response.json()
+            st.image(data['url'], caption='Analyse SHAP')
+        else:
+            st.error('Erreur lors de la récupération de l\'analyse SHAP')
+
 
         

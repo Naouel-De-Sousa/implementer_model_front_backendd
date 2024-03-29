@@ -16,7 +16,7 @@ CORS(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémoire
 
 # charger traitement et modele 
-pipeline = load('C:\\Users\\naoue\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\mlruns\\models\\mon_pipeline_complet.joblib')
+pipeline = load('C:\\Users\\naoue\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
 
 ######################
 @app.route('/')
@@ -140,10 +140,12 @@ def get_client_info():
     
 
 
-""" ################ Shap
+################ Shap
 @app.route('/calculate-shap', methods=['POST'])
-def shap_analysis(client_id):
-    client_data = load_client_data(client_id, "C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv")
+def shap_analysis():
+    content = request.json
+    client_id = content['client_id']
+    client_data = load_client_data(client_id, 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv')
     if client_data.empty:
         return jsonify({'error': 'Client not found'}), 404
     
@@ -161,7 +163,7 @@ def shap_analysis(client_id):
     plot_path = f"static/shap_plot_{client_id}.png"
     plt.savefig(plot_path)
     plt.close()
-    return jsonify({"url": f"{request.host_url}{plot_path}"}) """
+    return jsonify({"url": f"{request.host_url}{plot_path}"}) 
 
 
 if __name__ == '__main__':
