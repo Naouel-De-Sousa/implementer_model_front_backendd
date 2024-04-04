@@ -9,6 +9,10 @@ from flask_caching import Cache
 from flask_cors import CORS
 import matplotlib.pyplot as plt
 import shap
+import matplotlib.pyplot as plt
+plt.switch_backend('TkAgg')  
+
+
 
 app = Flask(__name__)
 CORS(app)
@@ -68,6 +72,8 @@ def preprocess_data(data):
     return data_final
 
 
+
+
 #####################prediction
 @app.route('/predict', methods=['POST'])
 
@@ -94,10 +100,31 @@ def predict():
     cleaned_data = preprocess_data(client_data)
 
     # Faire la prédiction avec le pipeline
-    #prediction = pipeline.predict(cleaned_data)
     prediction = pipeline.predict(cleaned_data).tolist()  # Convertir en liste
-    result = {"prediction": int(prediction[0])}
-    return jsonify(result)
+
+    # Calculer les valeurs SHAP
+    data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
+    explainer = shap.Explainer(pipeline.named_steps['classifier'])
+
+    shap_values = explainer.shap_values(data_preprocessed)
+
+    # Convertir les valeurs SHAP en liste pour une transmission facile via JSON
+    shap_values_list = shap_values.tolist()
+
+    # renvoyer les noms des caractéristiques
+    feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out()
+    # Après avoir calculé les valeurs SHAP et les noms des caractéristiques
+    results = {
+        "prediction": int(prediction[0]),
+        "shap_values": shap_values_list,
+        "feature_names": feature_names.tolist()
+    }
+
+    # Retourner les résultats JSON
+    return jsonify(results)
+
+
+
 
 
 ############### all client info
@@ -120,8 +147,15 @@ def get_all_client_info():
     return jsonify(data_dict)
 
 
+
+################SHAP
+
+
+
+
+
 #####################
-@app.route('/get-client-info', methods=['POST'])
+@app.route('/get-client-info', methods=['get'])
 
 def get_client_info():
     content = request.json
@@ -140,30 +174,7 @@ def get_client_info():
     
 
 
-################ Shap
-@app.route('/calculate-shap', methods=['POST'])
-def shap_analysis():
-    content = request.json
-    client_id = content['client_id']
-    client_data = load_client_data(client_id, 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv')
-    if client_data.empty:
-        return jsonify({'error': 'Client not found'}), 404
-    
-    # Préparation des données pour SHAP
-    cleaned_data = preprocess_data(client_data)
-    X_transformed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
-    feature_names_transformed = pipeline.named_steps['preprocessor'].get_feature_names_out()
 
-    # Calcul des valeurs SHAP
-    explainer = shap.TreeExplainer(pipeline.named_steps['classifier'])
-    shap_values = explainer.shap_values(X_transformed)
-
-    # Génération du plot
-    shap.summary_plot(shap_values, features=X_transformed, feature_names = feature_names_transformed ,show=False)
-    plot_path = f"static/shap_plot_{client_id}.png"
-    plt.savefig(plot_path)
-    plt.close()
-    return jsonify({"url": f"{request.host_url}{plot_path}"}) 
 
 
 if __name__ == '__main__':
