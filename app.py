@@ -7,11 +7,12 @@ from joblib import load
 import pdb
 from flask_caching import Cache
 from flask_cors import CORS
-import matplotlib.pyplot as plt
 import shap
+import matplotlib
+matplotlib.use('Agg')  # Définir le backend à 'Agg'
 import matplotlib.pyplot as plt
-plt.switch_backend('TkAgg')  
-
+import base64
+import io
 
 
 app = Flask(__name__)
@@ -45,6 +46,7 @@ def clean_feature_names_two(df):
 @cache.memoize(timeout=300)  # Met en cache le résultat pour 300 secondes
 
 # charger que les données utiles
+
 def load_client_data(client_id, client_data_path):
     # Charger l'intégralité du fichier CSV en mémoire
     data = pd.read_csv(client_data_path)
@@ -57,6 +59,7 @@ def load_client_data(client_id, client_data_path):
 
 
 ############## Fonctions de traitement des données
+
 def preprocess_data(data):
     # Remplacer les infinis par NaN
     data = replace_infinities(data)
@@ -74,7 +77,8 @@ def preprocess_data(data):
 
 
 
-#####################prediction
+#####################prediction 
+
 @app.route('/predict', methods=['POST'])
 
 def predict():
@@ -99,28 +103,38 @@ def predict():
     # Prétraiter les données du client
     cleaned_data = preprocess_data(client_data)
 
-    # Faire la prédiction avec le pipeline
-    prediction = pipeline.predict(cleaned_data).tolist()  # Convertir en liste
+    features_values = cleaned_data.values.tolist()
 
-    # Calculer les valeurs SHAP
+    prediction = pipeline.predict(cleaned_data).tolist()
+    expected_value = np.mean(prediction) # pour shap
+
     data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
+    
+    feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
+
+    # Génération des valeurs SHAP et prédiction
     explainer = shap.Explainer(pipeline.named_steps['classifier'])
-
     shap_values = explainer.shap_values(data_preprocessed)
+    explanation = shap.Explanation(values=shap_values, data=data_preprocessed,base_values=expected_value, feature_names=feature_names)
 
-    # Convertir les valeurs SHAP en liste pour une transmission facile via JSON
-    shap_values_list = shap_values.tolist()
-
-    # renvoyer les noms des caractéristiques
-    feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out()
-    # Après avoir calculé les valeurs SHAP et les noms des caractéristiques
+    # Générez le plot SHAP (par exemple, un waterfall plot pour le premier échantillon)
+    plt.figure()
+    shap.plots.waterfall(explanation[0], max_display=10)  # Modifier selon besoin
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    plt.close()
+    buf.seek(0)
+    
+    # Encodez l'image en base64
+    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    
     results = {
         "prediction": int(prediction[0]),
-        "shap_values": shap_values_list,
-        "feature_names": feature_names.tolist()
+        "shap_image": image_base64,  # Envoyez l'image encodée
+        "feature_names": feature_names,
+        "features": features_values 
     }
 
-    # Retourner les résultats JSON
     return jsonify(results)
 
 
@@ -128,16 +142,16 @@ def predict():
 
 
 ############### all client info
-@app.route('/get-all-client-info', methods=['GET'])  # Utiliser GET puisqu'on ne soumet pas de données
+
+@app.route('/get-all-client-info', methods=['GET'])  
 def get_all_client_info():
-    # Chemin vers votre fichier de données
+    # Chemin vers fichier de données
     client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
     
     # Charger les données complètes
     client_data = pd.read_csv(client_data_path)
     
-    # Sélectionner les colonnes désirées, si nécessaire
-    # Exemple : sélectionner les 20 premières colonnes
+    # Sélectionner les 20 premiere colonnes 
     client_data = client_data.iloc[:,:20]  # Optionnel, selon votre besoin
     
     # Convertir le DataFrame en dictionnaire pour le jsonify
@@ -148,29 +162,27 @@ def get_all_client_info():
 
 
 
-################SHAP
-
 
 
 
 
 #####################
-@app.route('/get-client-info', methods=['get'])
+# @app.route('/get-client-info', methods=['get'])
 
-def get_client_info():
-    content = request.json
-    client_id = content['client_id']
-    # Chemin vers votre fichier de données
-    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
-    # Utilisation de la fonction pour charger les données spécifiques du client
-    client_info = load_client_data(client_id, client_data_path)
-    if not client_info.empty:
-        # Sélectionner les 20 premières colonnes
-        client_info = client_info.iloc[:,:20]  # Utilise .iloc pour sélectionner les colonnes par position
-        # Renvoyer les informations du client spécifiquement demandées
-        return jsonify(client_info.to_dict(orient='records')[0])
-    else:
-        return jsonify({'error': 'Client not found'}), 404
+# def get_client_info():
+#     content = request.json
+#     client_id = content['client_id']
+#     # Chemin vers votre fichier de données
+#     client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
+#     # Utilisation de la fonction pour charger les données spécifiques du client
+#     client_info = load_client_data(client_id, client_data_path)
+#     if not client_info.empty:
+#         # Sélectionner les 20 premières colonnes
+#         client_info = client_info.iloc[:,:20]  # Utilise .iloc pour sélectionner les colonnes par position
+#         # Renvoyer les informations du client spécifiquement demandées
+#         return jsonify(client_info.to_dict(orient='records')[0])
+#     else:
+#         return jsonify({'error': 'Client not found'}), 404
     
 
 
