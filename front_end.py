@@ -1,7 +1,6 @@
 
 import streamlit as st
 import requests
-import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -9,7 +8,15 @@ import shap
 from joblib import load
 from streamlit import components
 import matplotlib.pyplot as plt
-plt.switch_backend('TkAgg')  # Ou 'Qt5Agg' ou un autre backend interactif
+plt.switch_backend('TkAgg')
+import matplotlib
+matplotlib.use('Agg')  # Ou 'Qt5Agg' ou un autre backend interactif
+import base64
+from PIL import Image
+import io
+import time
+
+
 #######################################################
 #Title display
 html_temp = """
@@ -31,7 +38,9 @@ st.header('Objectif du Dashboard')
 # Text
 st.write("Ce dashboard offre une plateforme interactive permettant une analyse approfondie et une visualisation intuitive des profils clients.\n\nConçu pour être accessible aux non-experts en data science, il fournit des scores détaillés et des interprétations claires pour chaque client, enrichissant la compréhension sans nécessiter de connaissances techniques approfondies.")
 
-
+st.header('Présentation des features importance globale du modele')
+image = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\shap_global.png'
+st.image(image, caption='model global features importance ', alt = 'Présentation des features importance globale du modele')
 
 ######################### Formulaire pour saisir l'ID client
 
@@ -52,59 +61,58 @@ if 'prediction_result' in st.session_state and st.session_state['predict_clicked
     display_prediction_result(st.session_state['prediction_result'])
 
 
-## SHAP 
-## Fonction pour afficher le SHAP summary plot
-def display_shap_summary(shap_values, feature_names):
-    # Convertir les valeurs SHAP en un tableau numpy
-    shap_values_array = np.array(shap_values)
+############# SHAP 
+
+import streamlit.components.v1 as components
+
+def display_html_file_in_streamlit(html_file_path):
+    HtmlFile = open(html_file_path, 'r', encoding='utf-8')
+    source_code = HtmlFile.read() 
+    components.html(source_code, height=600)
+
+# Simuler un processus de prédiction
+def simulate_prediction():
+    progress_bar = st.progress(0)
+    for percent_complete in range(100):
+        time.sleep(0.05)  # Simuler un calcul en attente
+        progress_bar.progress(percent_complete + 1)
+    return True  
+
     
-    # Créer une explication SHAP avec les valeurs et les noms des caractéristiques
-    explanation = shap.Explanation(values=shap_values_array, base_values=None, data=None, feature_names=feature_names)
-
-    # Créer le SHAP summary plot avec le graphique beeswarm
-    shap.summary_plot(explanation, plot_type="bar")
-
 
 #################### Bouton pour les predictions
-if st.button('Prédire'):
-    st.session_state['predict_clicked'] = True  # Marquer que l'utilisateur a tenté une prédiction
-    if client_id_input:
-        client_id_valid = True
 
+# Bouton pour déclencher la prédiction
+if st.button('Prédire'):
+    prediction_result = simulate_prediction()
+    st.session_state['predict_clicked'] = True
+    if client_id_input:
         try:
             client_id_int = int(client_id_input)
-        except ValueError:
-            st.error("L'ID client doit être un nombre entier.")
-            client_id_valid = False
-
-        if client_id_valid:
+            st.session_state['selected_client_id'] = client_id_int 
+            # Envoyer la requête au backend Flask
             response = requests.post('http://localhost:5000/predict', json={'client_id': client_id_int})
             if response.status_code == 200:
                 data = response.json()
                 prediction = data['prediction']
-
-                shap_values = data.get('shap_values', [])
-                feature_names = data.get('feature_names', [])
-
-                # Stocker le résultat de la prédiction dans st.session_state
                 st.session_state['prediction_result'] = prediction
-                display_prediction_result(prediction)  # Afficher le résultat avec une fonction dédiée
-
+                display_prediction_result(prediction)
                 
-                     # Afficher le SHAP summary plot si les valeurs SHAP sont disponibles
-                    
-                if shap_values and feature_names:
-                    display_shap_summary(shap_values, feature_names) 
-                # Sauvegarder l'ID du client sélectionné dans st.session_state
-                st.session_state['selected_client_id'] = client_id_int
+                # Afficher l'image SHAP
+                if 'shap_image' in data:
+                    shap_image_base64 = data['shap_image']
+                    shap_image = Image.open(io.BytesIO(base64.b64decode(shap_image_base64)))
+                    st.image(shap_image, caption='SHAP Visualization')
 
-
-        else:
-            st.error('Une erreur est survenue lors de la prédiction.')
+            else:
+                st.error('Une erreur est survenue lors de la prédiction.')
+        except ValueError:
+            st.error("L'ID client doit être un nombre entier.")
     else:
-        # Afficher l'erreur seulement si 'Prédire' a été cliqué sans ID
         if st.session_state['predict_clicked']:
             st.error("Veuillez entrer un ID client.")
+
+
 
 
 
@@ -120,7 +128,6 @@ if 'data' not in st.session_state or st.button('Charger les données'):
         st.error("Impossible de récupérer les données.")
 
 
-# Si les données sont chargées
 if 'data' in st.session_state:
     df = st.session_state['data']
     # Choix de la première variable pour le plot
@@ -135,36 +142,69 @@ if 'data' in st.session_state:
     if not pd.api.types.is_numeric_dtype(df[variable_choice_1]) or not pd.api.types.is_numeric_dtype(df[variable_choice_2]):
         st.warning('Veuillez choisir des variables de type numérique.')
     else:
-        # Création du plot pour la première variable numérique
-        fig, ax = plt.subplots()
-        ax.hist(df[variable_choice_1].dropna(), bins=50, label='Distribution générale')
-        if include_client_info and 'selected_client_id' in st.session_state:
-            client_id = st.session_state['selected_client_id']
-            client_info = df[df['SK_ID_CURR'] == client_id]
-            if not client_info.empty:
-                client_value_1 = client_info[variable_choice_1].iloc[0]
-                ax.axvline(client_value_1, color='r', linestyle='--', label='Client sélectionné')
-                ax.legend()
-        ax.set_ylabel('Fréquence')
-        ax.set_xlabel(variable_choice_1)
-        ax.set_title(f'Distribution de {variable_choice_1}')
-        st.pyplot(fig)
-
-        # Option pour afficher le graphique combiné des deux variables
-        if st.checkbox('Afficher le graphique combinant les deux variables sélectionnées'):
-            fig, ax = plt.subplots()
-            ax.scatter(df[variable_choice_1], df[variable_choice_2], alpha=0.5)
+        # Préparation de l'espace pour les 3 graphiques
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Création du plot pour la première variable numérique
+            fig1, ax1 = plt.subplots()
+            ax1.hist(df[variable_choice_1].dropna(), bins=50, label='Distribution générale')
             if include_client_info and 'selected_client_id' in st.session_state:
+                client_id = st.session_state['selected_client_id']
+                client_info = df[df['SK_ID_CURR'] == client_id]
+                if not client_info.empty:
+                    client_value_1 = client_info[variable_choice_1].iloc[0]
+                    ax1.axvline(client_value_1, color='r', linestyle='--', label='Client sélectionné')
+                    ax1.legend()
+            ax1.set_ylabel('Fréquence')
+            ax1.set_xlabel(variable_choice_1)
+            ax1.set_title(f'Distribution de {variable_choice_1}')
+            st.pyplot(fig1)
+            st.caption("affichage des information concernat la variable selectionnée")
+            plt.close()
+        
+        with col2:
+            # Création du plot pour la deuxième variable numérique
+            fig2, ax2 = plt.subplots()
+            ax2.hist(df[variable_choice_2].dropna(), bins=50, label='Distribution générale')
+            if include_client_info and 'selected_client_id' in st.session_state and not client_info.empty:
                 client_value_2 = client_info[variable_choice_2].iloc[0]
-                ax.scatter(client_value_1, client_value_2, color='r')
-                ax.annotate('Client sélectionné', (client_value_1, client_value_2), textcoords="offset points", xytext=(0,10), ha='center')
-            ax.set_xlabel(variable_choice_1)
-            ax.set_ylabel(variable_choice_2)
-            ax.set_title(f'Relation entre {variable_choice_1} et {variable_choice_2}')
-            st.pyplot(fig)
+                ax2.axvline(client_value_2, color='r', linestyle='--', label='Client sélectionné')
+                ax2.legend()
+            ax2.set_ylabel('Fréquence')
+            ax2.set_xlabel(variable_choice_2)
+            ax2.set_title(f'Distribution de {variable_choice_2}')
+            st.pyplot(fig2)
+            plt.close()
+        
+        with col3:
+            # Création du plot combinant les deux variables
+            fig3, ax3 = plt.subplots()
+            ax3.scatter(df[variable_choice_1], df[variable_choice_2], alpha=0.5)
+            if include_client_info and 'selected_client_id' in st.session_state and not client_info.empty:
+                ax3.scatter(client_value_1, client_value_2, color='r')
+                ax3.annotate('Client sélectionné', (client_value_1, client_value_2), textcoords="offset points", xytext=(0,10), ha='center')
+            ax3.set_xlabel(variable_choice_1)
+            ax3.set_ylabel(variable_choice_2)
+            ax3.set_title(f'Relation entre {variable_choice_1} et {variable_choice_2}')
+            st.pyplot(fig3)
+            plt.close()
 
 
 
 
 
- ############# shap
+
+
+
+
+
+
+
+
+
+
+
+
+
+
