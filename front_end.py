@@ -51,6 +51,16 @@ def display_prediction_result(prediction):
     else:
         st.markdown("<h2 style='color: green;'>Pas de risque de défaut détecté : Accord de crédit</h2>", unsafe_allow_html=True)
 
+# Fonction pour afficher une barre de progression personnalisée
+def custom_progress_bar(progress, color):
+    progress_bar_html = f"""
+    <div style='width: 100%;'>
+        <div style='width: {progress}%; background-color: {color}; height: 24px; border-radius: 5px;'>
+        </div>
+    </div>
+    """
+    st.markdown(progress_bar_html, unsafe_allow_html=True)
+
 # Initialisation d'une variable pour suivre si 'Prédire' a été cliqué sans entrée valide
 if 'predict_clicked' not in st.session_state:
     st.session_state['predict_clicked'] = False
@@ -71,25 +81,24 @@ def display_html_file_in_streamlit(html_file_path):
     components.html(source_code, height=600)
 
 # Simuler un processus de prédiction
-def simulate_prediction():
-    progress_bar = st.progress(0)
-    for percent_complete in range(100):
-        time.sleep(0.05)  # Simuler un calcul en attente
-        progress_bar.progress(percent_complete + 1)
-    return True  
+# def simulate_prediction():
+#     progress_bar = st.progress(0)
+#     for percent_complete in range(100):
+#         time.sleep(0.05)  # Simuler un calcul en attente
+#         progress_bar.progress(percent_complete + 1)
+#     return True  
 
-    
 
 #################### Bouton pour les predictions
 
 # Bouton pour déclencher la prédiction
 if st.button('Prédire'):
-    prediction_result = simulate_prediction()
+    #prediction_result = simulate_prediction()
     st.session_state['predict_clicked'] = True
-    if client_id_input:
+    if client_id_input:  # Assurez-vous que 'client_id_input' est défini quelque part dans votre code avant ce bloc
         try:
             client_id_int = int(client_id_input)
-            st.session_state['selected_client_id'] = client_id_int 
+            st.session_state['selected_client_id'] = client_id_int
             # Envoyer la requête au backend Flask
             response = requests.post('http://localhost:5000/predict', json={'client_id': client_id_int})
             if response.status_code == 200:
@@ -98,7 +107,15 @@ if st.button('Prédire'):
                 st.session_state['prediction_result'] = prediction
                 display_prediction_result(prediction)
                 
-                # Afficher l'image SHAP
+                # # Après avoir reçu le résultat de la prédiction, définissez la couleur de la barre de progression
+                # if st.session_state['prediction_result'] == 1:  # Supposons que 1 signifie refus de crédit
+                #     custom_color = "red"
+                # else:
+                #     custom_color = "green"
+                
+                # custom_progress_bar(100, custom_color)  # Affichez la barre de progression à 100% avec la couleur appropriée
+
+                # Afficher l'image SHAP si disponible
                 if 'shap_image' in data:
                     shap_image_base64 = data['shap_image']
                     shap_image = Image.open(io.BytesIO(base64.b64decode(shap_image_base64)))
