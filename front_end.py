@@ -17,6 +17,7 @@ import io
 import time
 
 
+
 #######################################################
 #Title display
 html_temp = """
@@ -26,9 +27,6 @@ html_temp = """
 <p style="font-size: 20px; font-weight: bold; text-align:center">Support de decision de credit </p>
 """
 st.markdown(html_temp, unsafe_allow_html=True)
-
-# Utiliser st.markdown pour colorier le titre
-#st.markdown("<h1 style='color: blue;'>Risque de défaut de crédit à la consommation</h1>", unsafe_allow_html=True)
 
 
 # header/subheader
@@ -40,35 +38,45 @@ st.write("Ce dashboard offre une plateforme interactive permettant une analyse a
 
 st.header('Présentation des features importance globale du modele')
 image = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\shap_global.png'
-st.image(image, caption='model global features importance ', alt = 'Présentation des features importance globale du modele')
+st.image(image, caption='model global features importance ')
+st.text("Description alternative de l'image : Présentation des features importance globale du modèle.")
 
 ######################### Formulaire pour saisir l'ID client
 
-# Fonction pour afficher le résultat de la prédiction
-def display_prediction_result(prediction):
-    if prediction == 1:
-        st.markdown("<h2 style='color: red;'>Risque de défaut détecté : Refus de crédit</h2>", unsafe_allow_html=True)
-    else:
-        st.markdown("<h2 style='color: green;'>Pas de risque de défaut détecté : Accord de crédit</h2>", unsafe_allow_html=True)
+# Fonction pour afficher le résultat de la prédiction et la probabilité
+def display_prediction_result(prediction, probability_of_default):
+    result_text = "Rembourse" if prediction == 0 else "Ne rembourse pas"
+    probability_text = f"Probabilité de non-remboursement : {probability_of_default:.2f}%"
+    color = "green" if probability_of_default > 80 else "red"
 
-# Fonction pour afficher une barre de progression personnalisée
-def custom_progress_bar(progress, color):
-    progress_bar_html = f"""
-    <div style='width: 100%;'>
-        <div style='width: {progress}%; background-color: {color}; height: 24px; border-radius: 5px;'>
-        </div>
-    </div>
-    """
-    st.markdown(progress_bar_html, unsafe_allow_html=True)
+    st.write(f"Prédiction : {result_text}")
+    st.markdown(f"**{probability_text}**", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color:{color};'>{probability_text}</h2>", unsafe_allow_html=True)
+    
+    # Préparer les données pour le bar chart
+    states = ['Remboursement', 'Non-Remboursement']
+    probabilities = [100 - probability_of_default, probability_of_default]
+    colors = ['green' if 100 - probability_of_default > 80 else 'red', 
+              'green' if probability_of_default > 80 else 'red']
+    
+    # Créer le bar chart avec matplotlib
+    fig, ax = plt.subplots()
+    bars = ax.bar(states, probabilities, color=colors)
+    ax.bar_label(bars)
 
-# Initialisation d'une variable pour suivre si 'Prédire' a été cliqué sans entrée valide
-if 'predict_clicked' not in st.session_state:
-    st.session_state['predict_clicked'] = False
+    for bar, color in zip(bars, colors):
+        bar.set_color(color)
+
+    plt.xlabel('État')
+    plt.ylabel('Probabilité (%)')
+    plt.title('Probabilité de Remboursement vs Non-Remboursement')
+    st.pyplot(fig)
+
+def display_prediction_if_available():
+    if 'prediction_result' in st.session_state and 'probability_of_default' in st.session_state:
+        display_prediction_result(st.session_state['prediction_result'], st.session_state['probability_of_default'])
 
 client_id_input = st.text_input('Entrez l\'ID client:', '', key='unique_client_id_input_key')
-
-if 'prediction_result' in st.session_state and st.session_state['predict_clicked']:
-    display_prediction_result(st.session_state['prediction_result'])
 
 
 ############# SHAP 
@@ -80,58 +88,35 @@ def display_html_file_in_streamlit(html_file_path):
     source_code = HtmlFile.read() 
     components.html(source_code, height=600)
 
-# Simuler un processus de prédiction
-# def simulate_prediction():
-#     progress_bar = st.progress(0)
-#     for percent_complete in range(100):
-#         time.sleep(0.05)  # Simuler un calcul en attente
-#         progress_bar.progress(percent_complete + 1)
-#     return True  
-
-
 #################### Bouton pour les predictions
 
 # Bouton pour déclencher la prédiction
 if st.button('Prédire'):
-    #prediction_result = simulate_prediction()
-    st.session_state['predict_clicked'] = True
-    if client_id_input:  # Assurez-vous que 'client_id_input' est défini quelque part dans votre code avant ce bloc
+    if client_id_input:
         try:
             client_id_int = int(client_id_input)
-            st.session_state['selected_client_id'] = client_id_int
-            # Envoyer la requête au backend Flask
             response = requests.post('http://localhost:5000/predict', json={'client_id': client_id_int})
             if response.status_code == 200:
                 data = response.json()
                 prediction = data['prediction']
+                probability_of_default = data.get('probability_of_default', 0)
                 st.session_state['prediction_result'] = prediction
-                display_prediction_result(prediction)
-                
-                # # Après avoir reçu le résultat de la prédiction, définissez la couleur de la barre de progression
-                # if st.session_state['prediction_result'] == 1:  # Supposons que 1 signifie refus de crédit
-                #     custom_color = "red"
-                # else:
-                #     custom_color = "green"
-                
-                # custom_progress_bar(100, custom_color)  # Affichez la barre de progression à 100% avec la couleur appropriée
+                st.session_state['probability_of_default'] = probability_of_default
+                display_prediction_result(prediction, probability_of_default)
 
-                # Afficher l'image SHAP si disponible
                 if 'shap_image' in data:
                     shap_image_base64 = data['shap_image']
                     shap_image = Image.open(io.BytesIO(base64.b64decode(shap_image_base64)))
                     st.image(shap_image, caption='SHAP Visualization')
-
             else:
                 st.error('Une erreur est survenue lors de la prédiction.')
         except ValueError:
             st.error("L'ID client doit être un nombre entier.")
     else:
-        if st.session_state['predict_clicked']:
-            st.error("Veuillez entrer un ID client.")
+        st.error("Veuillez entrer un ID client.")
 
-
-
-
+# Toujours réafficher les résultats de prédiction après chaque interaction si disponibles
+display_prediction_if_available()
 
 #################### Bouton pour récupérer toutes les données et afficher le plot
             
@@ -177,7 +162,7 @@ if 'data' in st.session_state:
             ax1.set_xlabel(variable_choice_1)
             ax1.set_title(f'Distribution de {variable_choice_1}')
             st.pyplot(fig1)
-            st.caption("affichage des information concernat la variable selectionnée")
+            st.caption("affichage des information concernant la variable sélectionnée")
             plt.close()
         
         with col2:
@@ -205,8 +190,9 @@ if 'data' in st.session_state:
             ax3.set_ylabel(variable_choice_2)
             ax3.set_title(f'Relation entre {variable_choice_1} et {variable_choice_2}')
             st.pyplot(fig3)
-            plt.close()
-
+            plt.close('all')
+            # Changement du backend
+            plt.switch_backend('TkAgg')
 
 
 

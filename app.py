@@ -21,7 +21,7 @@ CORS(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémoire
 
 # charger traitement et modele 
-pipeline = load('C:\\Users\\naoue\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
+pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
 
 ######################
 @app.route('/')
@@ -92,7 +92,7 @@ def predict():
 
     # Chemin vers votre fichier de données (ajustez selon votre configuration)
     client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
-
+    
     # Charger les données complètes du client
     client_data = load_client_data(client_id, client_data_path)
     
@@ -102,10 +102,13 @@ def predict():
 
     # Prétraiter les données du client
     cleaned_data = preprocess_data(client_data)
-
     features_values = cleaned_data.values.tolist()
 
+    # les predictions
     prediction = pipeline.predict(cleaned_data).tolist()
+    probabilities = pipeline.predict_proba(cleaned_data)
+    probability_of_default = probabilities[0][1] * 100  # calculer les proba
+    
     expected_value = np.mean(prediction) # pour shap
 
     data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
@@ -132,7 +135,8 @@ def predict():
         "prediction": int(prediction[0]),
         "shap_image": image_base64,  # Envoyez l'image encodée
         "feature_names": feature_names,
-        "features": features_values 
+        "features": features_values ,
+        "probability_of_default":probability_of_default
     }
 
     return jsonify(results)
