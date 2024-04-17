@@ -123,12 +123,6 @@ watchdog==4.0.0
 wcwidth==0.2.13
 Werkzeug==3.0.2
 zipp==3.18.1
-(new_env) PS C:\Users\naoue\Documents\OpenClassroomDataScientist\projet_7_version_3> pip install --upgrade --force-reinstall -r requirements.txt
-ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'
-(new_env) PS C:\Users\naoue\Documents\OpenClassroomDataScientist\projet_7_version_3> pip install -r requirements.txt
-ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'
-(new_env) PS C:\Users\naoue\Documents\OpenClassroomDataScientist\projet_7_version_3> pip install --upgrade --force-reinstall -r requirements.txt
-(new_env) PS C:\Users\naoue\Documents\OpenClassroomDataScientist\projet_7_version_3> pip freeze requirements.txt    
 altair==5.3.0
 annotated-types==0.6.0
 anyio==4.3.0
