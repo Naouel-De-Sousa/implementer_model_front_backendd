@@ -1,4 +1,7 @@
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import streamlit as st
 import requests
 import seaborn as sns
@@ -7,14 +10,9 @@ import numpy as np
 import shap
 from joblib import load
 from streamlit import components
-import matplotlib.pyplot as plt
-plt.switch_backend('TkAgg')
-import matplotlib
-matplotlib.use('Agg')  # Ou 'Qt5Agg' ou un autre backend interactif
 import base64
 from PIL import Image
 import io
-import time
 
 
 
@@ -163,7 +161,7 @@ if 'data' in st.session_state:
             ax1.set_title(f'Distribution de {variable_choice_1}')
             st.pyplot(fig1)
             st.caption("affichage des information concernant la variable sélectionnée")
-            plt.close()
+           
         
         with col2:
             # Création du plot pour la deuxième variable numérique
@@ -177,7 +175,7 @@ if 'data' in st.session_state:
             ax2.set_xlabel(variable_choice_2)
             ax2.set_title(f'Distribution de {variable_choice_2}')
             st.pyplot(fig2)
-            plt.close()
+           
         
         with col3:
             # Création du plot combinant les deux variables
@@ -190,9 +188,10 @@ if 'data' in st.session_state:
             ax3.set_ylabel(variable_choice_2)
             ax3.set_title(f'Relation entre {variable_choice_1} et {variable_choice_2}')
             st.pyplot(fig3)
+
             plt.close('all')
             # Changement du backend
-            plt.switch_backend('TkAgg')
+            plt.switch_backend('Agg')
 
 
 

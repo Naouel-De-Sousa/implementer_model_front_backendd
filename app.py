@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify
 import pickle
 import pandas as pd
@@ -9,10 +12,9 @@ from flask_caching import Cache
 from flask_cors import CORS
 import shap
 import matplotlib
-matplotlib.use('Agg')  # Définir le backend à 'Agg'
-import matplotlib.pyplot as plt
 import base64
 import io
+
 
 
 app = Flask(__name__)
@@ -57,7 +59,6 @@ def load_client_data(client_id, client_data_path):
  
 
 
-
 ############## Fonctions de traitement des données
 
 def preprocess_data(data):
@@ -80,8 +81,8 @@ def preprocess_data(data):
 #####################prediction 
 
 @app.route('/predict', methods=['POST'])
-
 def predict():
+    app.logger.debug(f"Received JSON: {request.json}")
     content = request.json
     try:
         # Assurez-vous que client_id est un entier
@@ -166,32 +167,12 @@ def get_all_client_info():
 
 
 
-
-
-
-
-#####################
-# @app.route('/get-client-info', methods=['get'])
-
-# def get_client_info():
-#     content = request.json
-#     client_id = content['client_id']
-#     # Chemin vers votre fichier de données
-#     client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
-#     # Utilisation de la fonction pour charger les données spécifiques du client
-#     client_info = load_client_data(client_id, client_data_path)
-#     if not client_info.empty:
-#         # Sélectionner les 20 premières colonnes
-#         client_info = client_info.iloc[:,:20]  # Utilise .iloc pour sélectionner les colonnes par position
-#         # Renvoyer les informations du client spécifiquement demandées
-#         return jsonify(client_info.to_dict(orient='records')[0])
-#     else:
-#         return jsonify({'error': 'Client not found'}), 404
-    
-
-
+for rule in app.url_map.iter_rules():
+    print(f'{rule.endpoint}: {rule}')
 
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+   
