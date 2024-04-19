@@ -13,7 +13,7 @@ from streamlit import components
 import base64
 from PIL import Image
 import io
-
+import streamlit.components.v1 as components
 
 
 #######################################################
@@ -44,18 +44,21 @@ st.text("Description alternative de l'image : Présentation des features importa
 # Fonction pour afficher le résultat de la prédiction et la probabilité
 def display_prediction_result(prediction, probability_of_default):
     result_text = "Rembourse" if prediction == 0 else "Ne rembourse pas"
-    probability_text = f"Probabilité de non-remboursement : {probability_of_default:.2f}%"
-    color = "green" if probability_of_default > 80 else "red"
+    probability_of_repayment = 100 - probability_of_default
+    probability_text = f"Probabilité de remboursement : {probability_of_repayment:.2f}%"
+    
+    # Color based on prediction
+    color = "green" if prediction == 0 else "red"
 
+    # Display results
     st.write(f"Prédiction : {result_text}")
     st.markdown(f"**{probability_text}**", unsafe_allow_html=True)
     st.markdown(f"<h2 style='color:{color};'>{probability_text}</h2>", unsafe_allow_html=True)
     
     # Préparer les données pour le bar chart
     states = ['Remboursement', 'Non-Remboursement']
-    probabilities = [100 - probability_of_default, probability_of_default]
-    colors = ['green' if 100 - probability_of_default > 80 else 'red', 
-              'green' if probability_of_default > 80 else 'red']
+    probabilities = [probability_of_repayment, probability_of_default]
+    colors = ['green', 'red']  # Vert pour remboursement, Rouge pour non-remboursement
     
     # Créer le bar chart avec matplotlib
     fig, ax = plt.subplots()
@@ -74,12 +77,11 @@ def display_prediction_if_available():
     if 'prediction_result' in st.session_state and 'probability_of_default' in st.session_state:
         display_prediction_result(st.session_state['prediction_result'], st.session_state['probability_of_default'])
 
+
+############## entrer client id 
 client_id_input = st.text_input('Entrez l\'ID client:', '', key='unique_client_id_input_key')
 
 
-############# SHAP 
-
-import streamlit.components.v1 as components
 
 def display_html_file_in_streamlit(html_file_path):
     HtmlFile = open(html_file_path, 'r', encoding='utf-8')
@@ -117,6 +119,7 @@ if st.button('Prédire'):
 display_prediction_if_available()
 
 #################### Bouton pour récupérer toutes les données et afficher le plot
+st.session_state['selected_client_id'] = client_id_input
             
 if 'data' not in st.session_state or st.button('Charger les données'):
     response = requests.get('http://localhost:5000/get-all-client-info')
@@ -193,8 +196,7 @@ if 'data' in st.session_state:
             # Changement du backend
             plt.switch_backend('Agg')
 
-
-
+    
 
 
 
