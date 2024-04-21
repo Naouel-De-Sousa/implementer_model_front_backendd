@@ -145,7 +145,6 @@ def predict():
 
 
 
-
 ############### all client info
 
 @app.route('/get-all-client-info', methods=['GET'])  
@@ -172,7 +171,8 @@ for rule in app.url_map.iter_rules():
 
 
 
-if __name__ == '__main__':
-    app.run(host='localhost', port=5000)
+if __name__ == "__main__":
+    app.run(debug=True, host='localhost', port=5000)
+
 
    

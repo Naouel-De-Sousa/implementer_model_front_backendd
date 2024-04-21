@@ -16,6 +16,19 @@ import io
 import streamlit.components.v1 as components
 
 
+# URL de votre API Flask
+api_url = "http://naouel.pythonanywhere.com/"
+
+# Faire une requête GET
+response = requests.get(api_url)
+if response.status_code == 200:
+    data = response.json()
+    # Traiter les données
+else:
+    st.error("Failed to retrieve data")
+
+
+    
 #######################################################
 #Title display
 html_temp = """
