@@ -16,16 +16,6 @@ import io
 import streamlit.components.v1 as components
 
 
-# URL de votre API Flask
-api_url = "http://naouel.pythonanywhere.com/"
-
-# Faire une requête GET
-response = requests.get(api_url)
-if response.status_code == 200:
-    data = response.json()
-    # Traiter les données
-else:
-    st.error("Failed to retrieve data")
 
 
     
@@ -110,19 +100,24 @@ if st.button('Prédire'):
             client_id_int = int(client_id_input)
             response = requests.post('http://naouel.pythonanywhere.com/predict', json={'client_id': client_id_int})
             if response.status_code == 200:
-                data = response.json()
-                prediction = data['prediction']
-                probability_of_default = data.get('probability_of_default', 0)
-                st.session_state['prediction_result'] = prediction
-                st.session_state['probability_of_default'] = probability_of_default
-                display_prediction_result(prediction, probability_of_default)
+                if response.text: # Vérifiez si la réponse n'est pas vide
+                    data = response.json()
+                    prediction = data['prediction']
+                    probability_of_default = data.get('probability_of_default', 0)
+                    st.session_state['prediction_result'] = prediction
+                    st.session_state['probability_of_default'] = probability_of_default
+                    display_prediction_result(prediction, probability_of_default)
+                else:
+                    st.error("La réponse de l'API est vide.")
 
                 if 'shap_image' in data:
                     shap_image_base64 = data['shap_image']
                     shap_image = Image.open(io.BytesIO(base64.b64decode(shap_image_base64)))
                     st.image(shap_image, caption='SHAP Visualization')
             else:
-                st.error('Une erreur est survenue lors de la prédiction.')
+                st.error('Une erreur est survenue lors de la prédiction. Code d\'erreur : {}'.format(response.status_code))
+                st.text("Détails de l'erreur : " + response.text)
+
         except ValueError:
             st.error("L'ID client doit être un nombre entier.")
     else:
