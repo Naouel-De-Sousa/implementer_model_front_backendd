@@ -106,7 +106,6 @@ statsmodels==0.14.2
 streamlit==1.33.0
 tenacity==8.2.3
 threadpoolctl==3.4.0
-tk==8.6.12
 toml==0.10.2
 tomli==2.0.1
 toolz==0.12.1
