@@ -108,7 +108,7 @@ if st.button('Prédire'):
     if client_id_input:
         try:
             client_id_int = int(client_id_input)
-            response = requests.post('http://localhost:5000/predict', json={'client_id': client_id_int})
+            response = requests.post('http://naouel.pythonanywhere.com/predict', json={'client_id': client_id_int})
             if response.status_code == 200:
                 data = response.json()
                 prediction = data['prediction']
@@ -135,7 +135,7 @@ display_prediction_if_available()
 st.session_state['selected_client_id'] = client_id_input
             
 if 'data' not in st.session_state or st.button('Charger les données'):
-    response = requests.get('http://localhost:5000/get-all-client-info')
+    response = requests.get('http://naouel.pythonanywhere.com/get-all-client-info')
     if response.status_code == 200:
         all_client_data = response.json()
         df = pd.DataFrame(all_client_data)
