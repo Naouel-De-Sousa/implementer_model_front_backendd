@@ -80,7 +80,6 @@ def preprocess_data(data):
 
 
 
-
 #####################prediction 
 
 @app.route('/predict', methods=['POST'])
