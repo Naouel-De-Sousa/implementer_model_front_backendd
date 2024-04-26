@@ -14,7 +14,7 @@ import shap
 import matplotlib
 import base64
 import io
-
+import requests
 
 
 app = Flask(__name__)
@@ -22,8 +22,11 @@ CORS(app)
 # Configuration de Flask-Caching
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémoire
 
-# charger traitement et modele 
-pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
+
+# URL de votre modèle sur GitHub (lien direct/raw)
+pipeline = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
+
+#pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
 
 ######################
 @app.route('/')
@@ -92,7 +95,7 @@ def predict():
         return jsonify({'error': 'client_id doit être un entier'}), 400
 
     # Chemin vers votre fichier de données (ajustez selon votre configuration)
-    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
+    client_data_path = 'https://git-lfs.github.com/spec/v1'
     
     # Charger les données complètes du client
     client_data = load_client_data(client_id, client_data_path)
