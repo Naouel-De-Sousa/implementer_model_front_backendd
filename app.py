@@ -82,14 +82,13 @@ def preprocess_data(data):
 
 #####################prediction 
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['GET'])
 def predict():
-    app.logger.debug(f"Received JSON: {request.json}")
-    content = request.json
+    app.logger.debug(f"Received query params: {request.args}")
     try:
         # Assurez-vous que client_id est un entier
-        client_id = int(content['client_id'])
-    except (ValueError, TypeError, KeyError):
+        client_id = int(request.args.get('client_id', ''))
+    except (ValueError, TypeError):
         # Retourner une erreur si la conversion échoue ou si client_id est manquant
         return jsonify({'error': 'client_id doit être un entier'}), 400
 
@@ -110,7 +109,7 @@ def predict():
     # les predictions
     prediction = pipeline.predict(cleaned_data).tolist()
     probabilities = pipeline.predict_proba(cleaned_data)
-    probability_of_default = probabilities[0][1] * 100  # calculer les proba
+    probability_of_default = probabilities[0][1] * 100  # calculer les probabilités
     
     expected_value = np.mean(prediction) # pour shap
 
@@ -121,7 +120,7 @@ def predict():
     # Génération des valeurs SHAP et prédiction
     explainer = shap.Explainer(pipeline.named_steps['classifier'])
     shap_values = explainer.shap_values(data_preprocessed)
-    explanation = shap.Explanation(values=shap_values, data=data_preprocessed,base_values=expected_value, feature_names=feature_names)
+    explanation = shap.Explanation(values=shap_values, data=data_preprocessed, base_values=expected_value, feature_names=feature_names)
 
     # Générez le plot SHAP (par exemple, un waterfall plot pour le premier échantillon)
     plt.figure()
@@ -138,8 +137,8 @@ def predict():
         "prediction": int(prediction[0]),
         "shap_image": image_base64,  # Envoyez l'image encodée
         "feature_names": feature_names,
-        "features": features_values ,
-        "probability_of_default":probability_of_default
+        "features": features_values,
+        "probability_of_default": probability_of_default
     }
 
     return jsonify(results)
