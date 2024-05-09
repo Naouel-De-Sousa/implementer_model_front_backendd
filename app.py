@@ -15,7 +15,10 @@ import matplotlib
 import base64
 import io
 import requests
-
+import os
+import base64
+from io import BytesIO
+import lightgbm as lgb
 
 app = Flask(__name__)
 CORS(app)
@@ -24,7 +27,9 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémo
 
 
 # URL de votre modèle sur GitHub (lien direct/raw)
-pipeline = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
+pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
+
+
 
 #pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
 
@@ -84,17 +89,21 @@ def preprocess_data(data):
 
 @app.route('/predict', methods=['GET'])
 def predict():
-    app.logger.debug(f"Received query params: {request.args}")
-    try:
-        # Assurez-vous que client_id est un entier
-        client_id = int(request.args.get('client_id', ''))
-    except (ValueError, TypeError):
-        # Retourner une erreur si la conversion échoue ou si client_id est manquant
-        return jsonify({'error': 'client_id doit être un entier'}), 400
-
-    # Chemin vers votre fichier de données (ajustez selon votre configuration)
-    client_data_path = 'https://git-lfs.github.com/spec/v1'
     
+    app.logger.debug("Received request with arguments: %s", request.args)
+
+    # Assurez-vous que client_id est un entier et présent dans les paramètres de l'URL
+    try:
+        client_id = int(request.args['client_id'])
+    except (ValueError, KeyError):
+        # Retourner une erreur si la conversion échoue ou si client_id est manquant
+        return jsonify({'error': 'client_id doit être un entier et présent'}), 400
+
+
+
+    # Chemin vers votre fichier de données 
+    #client_data_path = 'https://git-lfs.github.com/spec/v1'
+    client_data_path = os.path.abspath('./données_pour_model.csv')
     # Charger les données complètes du client
     client_data = load_client_data(client_id, client_data_path)
     
@@ -109,7 +118,7 @@ def predict():
     # les predictions
     prediction = pipeline.predict(cleaned_data).tolist()
     probabilities = pipeline.predict_proba(cleaned_data)
-    probability_of_default = probabilities[0][1] * 100  # calculer les probabilités
+    probability_of_default = probabilities[0][1] * 100  # calculer les proba
     
     expected_value = np.mean(prediction) # pour shap
 
@@ -117,31 +126,35 @@ def predict():
     
     feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
 
-    # Génération des valeurs SHAP et prédiction
-    explainer = shap.Explainer(pipeline.named_steps['classifier'])
+   # Génération des valeurs SHAP et prédiction
+    #explainer = shap.Explainer(pipeline.named_steps['classifier'])
+ 
+    # Calculer les valeurs SHAP pour chaque prédiction
+    explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
     shap_values = explainer.shap_values(data_preprocessed)
-    explanation = shap.Explanation(values=shap_values, data=data_preprocessed, base_values=expected_value, feature_names=feature_names)
 
-    # Générez le plot SHAP (par exemple, un waterfall plot pour le premier échantillon)
-    plt.figure()
-    shap.plots.waterfall(explanation[0], max_display=10)  # Modifier selon besoin
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    plt.close()
-    buf.seek(0)
-    
-    # Encodez l'image en base64
-    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+   # Créer un graphique SHAP
+    shap.summary_plot(shap_values, features=features_values, feature_names=feature_names, show=False)
+    plt.tight_layout()
+    # Enregistrer le graphique dans un buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    # Convertir l'image en base64
+    image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
     
     results = {
         "prediction": int(prediction[0]),
         "shap_image": image_base64,  # Envoyez l'image encodée
         "feature_names": feature_names,
-        "features": features_values,
-        "probability_of_default": probability_of_default
+        "features": features_values ,
+        "probability_of_default":probability_of_default
     }
 
     return jsonify(results)
+
 
 
 
@@ -151,11 +164,12 @@ def predict():
 @app.route('/get-all-client-info', methods=['GET'])  
 def get_all_client_info():
     # Chemin vers fichier de données
-    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
+    client_data_path = os.path.abspath('./données_pour_model.csv')
     
     # Charger les données complètes
-    client_data = pd.read_csv(client_data_path)
-    
+    #client_data = pd.read_csv(client_data_path)
+    client_data = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
+
     # Sélectionner les 20 premiere colonnes 
     client_data = client_data.iloc[:,:20]  # Optionnel, selon votre besoin
     
