@@ -99,7 +99,7 @@ if st.button('Prédire'):
     if client_id_input:
         try:
             client_id_int = int(client_id_input)
-            response = requests.get('http://naouel.pythonanywhere.com/predict', json={'client_id': client_id_int})
+            response = requests.get('http://naouel.pythonanywhere.com/predict',  params={'client_id': client_id_int})
             if response.status_code == 200:
                 if response.text: # Vérifiez si la réponse n'est pas vide
                     data = response.json()
@@ -128,8 +128,17 @@ if st.button('Prédire'):
 display_prediction_if_available()
 
 #################### Bouton pour récupérer toutes les données et afficher le plot
-st.session_state['selected_client_id'] = client_id_input
-            
+
+   
+if client_id_input:
+    try:
+        st.session_state['selected_client_id'] = int(client_id_input)  # S'assurer que l'ID est un entier
+    except ValueError:
+        st.error("L'ID client doit être un nombre entier.")
+else:
+    st.warning("Veuillez entrer un ID client.")
+
+   
 if 'data' not in st.session_state or st.button('Charger les données'):
     response = requests.get('http://naouel.pythonanywhere.com/get-all-client-info')
     if response.status_code == 200:
@@ -204,7 +213,6 @@ if 'data' in st.session_state:
             plt.close('all')
             # Changement du backend
             plt.switch_backend('Agg')
-
     
 
 

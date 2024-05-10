@@ -19,6 +19,8 @@ import os
 import base64
 from io import BytesIO
 import lightgbm as lgb
+from flask import abort
+
 
 app = Flask(__name__)
 CORS(app)
@@ -28,6 +30,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémo
 
 # Chemin vers fichier de données
 client_data_path = os.path.abspath('./données_pour_model.csv')
+
 
 # Charger les données complètes
 
@@ -178,7 +181,7 @@ for rule in app.url_map.iter_rules():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug= True)
 
 
    
