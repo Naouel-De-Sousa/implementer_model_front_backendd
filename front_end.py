@@ -98,7 +98,7 @@ if st.button('Prédire'):
     if client_id_input:
         try:
             client_id_int = int(client_id_input)
-            response = requests.get('http://naouel.pythonanywhere.com/predict', json={'client_id': client_id_int})
+            response = requests.post('http://naouel.pythonanywhere.com/predict', json={'client_id': client_id_int})
             if response.status_code == 200:
                 if response.text: # Vérifiez si la réponse n'est pas vide
                     data = response.json()

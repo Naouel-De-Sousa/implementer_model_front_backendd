@@ -26,6 +26,17 @@ CORS(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémoire
 
 
+# Chemin vers fichier de données
+client_data_path = os.path.abspath('./données_pour_model.csv')
+
+# Charger les données complètes
+
+clients_df = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
+# Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
+if 'SK_ID_CURR' in clients_df.columns:
+    clients_df['SK_ID_CURR'] = clients_df['SK_ID_CURR'].astype(float).astype(int)
+    clients_df.set_index('SK_ID_CURR', drop=False, inplace= True)
+
 # URL de votre modèle sur GitHub (lien direct/raw)
 pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
 
@@ -57,12 +68,12 @@ def clean_feature_names_two(df):
 
 # charger que les données utiles
 
-def load_client_data(client_id, client_data_path):
+#def load_client_data(client_id, client_data_path):
     # Charger l'intégralité du fichier CSV en mémoire
-    data = pd.read_csv(client_data_path)
+   # data = pd.read_csv(client_data_path)
     # Filtrer les données pour obtenir uniquement l'entrée correspondant à l'ID client spécifié
-    filtered_data = data[data['SK_ID_CURR'] == client_id]
-    return filtered_data
+    #filtered_data = data[data['SK_ID_CURR'] == client_id]
+   # return filtered_data
 
  
 
@@ -73,10 +84,6 @@ def preprocess_data(data):
     # Remplacer les infinis par NaN
     data = replace_infinities(data)
     print(data.columns)
-
-    # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
-    if 'SK_ID_CURR' in data.columns:
-        data['SK_ID_CURR'] = data['SK_ID_CURR'].astype(float).astype(int)
 
     # Nettoyer les noms des caractéristiques
     data_cleaned = clean_feature_names(data)
@@ -100,12 +107,8 @@ def predict():
         return jsonify({'error': 'client_id doit être un entier et présent'}), 400
 
 
-
-    # Chemin vers votre fichier de données 
-    #client_data_path = 'https://git-lfs.github.com/spec/v1'
-    client_data_path = os.path.abspath('./données_pour_model.csv')
     # Charger les données complètes du client
-    client_data = load_client_data(client_id, client_data_path)
+    client_data = clients_df.loc[[client_id]]
     
     # Si aucune donnée n'est trouvée pour le client_id donné, renvoyez une erreur
     if client_data.empty:
@@ -157,26 +160,14 @@ def predict():
 
 
 
-
-
 ############### all client info
 
 @app.route('/get-all-client-info', methods=['GET'])  
 def get_all_client_info():
-    # Chemin vers fichier de données
-    client_data_path = os.path.abspath('./données_pour_model.csv')
-    
-    # Charger les données complètes
-    #client_data = pd.read_csv(client_data_path)
-    client_data = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
 
-    # Sélectionner les 20 premiere colonnes 
-    client_data = client_data.iloc[:,:20]  # Optionnel, selon votre besoin
-    
-    # Convertir le DataFrame en dictionnaire pour le jsonify
-    # Utiliser orient='records' pour obtenir une liste de dictionnaires
-    data_dict = client_data.to_dict(orient='records')
-    
+    # Utiliser orient='records' pour obtenir un dictionnaires
+    data_dict = clients_df.iloc[:,:20].to_dict(orient='records')
+
     return jsonify(data_dict)
 
 
