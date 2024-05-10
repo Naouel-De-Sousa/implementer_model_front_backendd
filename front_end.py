@@ -38,7 +38,7 @@ st.header('Objectif du Dashboard')
 st.write("Ce dashboard offre une plateforme interactive permettant une analyse approfondie et une visualisation intuitive des profils clients.\n\nConçu pour être accessible aux non-experts en data science, il fournit des scores détaillés et des interprétations claires pour chaque client, enrichissant la compréhension sans nécessiter de connaissances techniques approfondies.")
 
 st.header('Présentation des features importance globale du modele')
-image =  os.path.abspath('./shap_global.png')
+image = Image.open(os.path.abspath('./shap_global.png'))
 
 st.image(image, caption='model global features importance ')
 st.text("Description alternative de l'image : Présentation des features importance globale du modèle.")
