@@ -23,9 +23,10 @@ from flask import abort
 
 
 app = Flask(__name__)
-CORS(app)
+#CORS(app)
 # Configuration de Flask-Caching
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémoire
+# Utilise un cache en mémoire
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 
 
 # Chemin vers fichier de données
@@ -51,12 +52,13 @@ model_path = './models/mon_pipeline_complet.joblib'
 download_file_from_github(data_url, data_path)
 download_file_from_github(model_url, model_path)
 
- 
-
 # Charger les données et le modèle
-
+# Charger les données
 client_data_path = os.path.abspath('./données_pour_model.csv')
-pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
+data = pd.read_csv(client_data_path)
+
+# Charger le modèle
+pipeline = load(os.path.abspath('./mon_pipeline_complet.joblib'))
 
 clients_df = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
@@ -91,17 +93,6 @@ def clean_feature_names_two(df):
 
 #réduire la charge sur le serveur pour des requêtes répétées
 @cache.memoize(timeout=300)  # Met en cache le résultat pour 300 secondes
-
-# charger que les données utiles
-
-#def load_client_data(client_id, client_data_path):
-    # Charger l'intégralité du fichier CSV en mémoire
-   # data = pd.read_csv(client_data_path)
-    # Filtrer les données pour obtenir uniquement l'entrée correspondant à l'ID client spécifié
-    #filtered_data = data[data['SK_ID_CURR'] == client_id]
-   # return filtered_data
-
- 
 
 
 ############## Fonctions de traitement des données
