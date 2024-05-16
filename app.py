@@ -29,10 +29,34 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémo
 
 
 # Chemin vers fichier de données
+#client_data_path = os.path.abspath('./données_pour_model.csv')
+#
+def download_file_from_github(url, destination):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(destination, 'wb') as file:
+            file.write(response.content)
+    else:
+        raise Exception(f"Failed to download file from {url}")
+
+
+# URLs directes vers vos fichiers GitHub (raw links)
+data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/donn%C3%A9es_pour_model.csv'
+model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
+# Chemins de destination
+data_path = './données_pour_model.csv'
+model_path = './models/mon_pipeline_complet.joblib'
+
+# Télécharger les fichiers
+download_file_from_github(data_url, data_path)
+download_file_from_github(model_url, model_path)
+
+ 
+
+# Charger les données et le modèle
+
 client_data_path = os.path.abspath('./données_pour_model.csv')
-
-
-# Charger les données complètes
+pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
 
 clients_df = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
@@ -41,8 +65,7 @@ if 'SK_ID_CURR' in clients_df.columns:
     clients_df.set_index('SK_ID_CURR', drop=False, inplace= True)
 
 # URL de votre modèle sur GitHub (lien direct/raw)
-pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
-
+#pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
 
 
 #pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
