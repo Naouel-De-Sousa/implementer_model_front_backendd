@@ -108,7 +108,6 @@ def preprocess_data(data):
     return data_final
 
 
-
 #####################prediction 
 
 @app.route('/predict', methods=['GET'])
