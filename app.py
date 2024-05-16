@@ -49,16 +49,16 @@ data_path = './données_pour_model.csv'
 model_path = './models/mon_pipeline_complet.joblib'
 
 # Télécharger les fichiers
-download_file_from_github(data_url, data_path)
-download_file_from_github(model_url, model_path)
+client_data_path = download_file_from_github(data_url, data_path)
+pipeline = download_file_from_github(model_url, model_path)
 
 # Charger les données et le modèle
 # Charger les données
-client_data_path = os.path.abspath('./données_pour_model.csv')
+#client_data_path = os.path.abspath('./données_pour_model.csv')
 data = pd.read_csv(client_data_path)
 
 # Charger le modèle
-pipeline = load(os.path.abspath('./mon_pipeline_complet.joblib'))
+#pipeline = load(os.path.abspath('./mon_pipeline_complet.joblib'))
 
 clients_df = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
