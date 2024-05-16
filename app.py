@@ -14,7 +14,12 @@ import shap
 import matplotlib
 import base64
 import io
-
+import requests
+import os
+import base64
+from io import BytesIO
+import lightgbm as lgb
+from flask import abort
 
 
 app = Flask(__name__)
@@ -22,8 +27,48 @@ CORS(app)
 # Configuration de Flask-Caching
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  # Utilise un cache en mémoire
 
-# charger traitement et modele 
-pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
+
+# Chemin vers fichier de données
+#client_data_path = os.path.abspath('./données_pour_model.csv')
+#
+def download_file_from_github(url, destination):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(destination, 'wb') as file:
+            file.write(response.content)
+    else:
+        raise Exception(f"Failed to download file from {url}")
+
+
+# URLs directes vers vos fichiers GitHub (raw links)
+data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/donn%C3%A9es_pour_model.csv'
+model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
+# Chemins de destination
+data_path = './données_pour_model.csv'
+model_path = './models/mon_pipeline_complet.joblib'
+
+# Télécharger les fichiers
+download_file_from_github(data_url, data_path)
+download_file_from_github(model_url, model_path)
+
+ 
+
+# Charger les données et le modèle
+
+client_data_path = os.path.abspath('./données_pour_model.csv')
+pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
+
+clients_df = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
+# Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
+if 'SK_ID_CURR' in clients_df.columns:
+    clients_df['SK_ID_CURR'] = clients_df['SK_ID_CURR'].astype(float).astype(int)
+    clients_df.set_index('SK_ID_CURR', drop=False, inplace= True)
+
+# URL de votre modèle sur GitHub (lien direct/raw)
+#pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
+
+
+#pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
 
 ######################
 @app.route('/')
@@ -49,12 +94,12 @@ def clean_feature_names_two(df):
 
 # charger que les données utiles
 
-def load_client_data(client_id, client_data_path):
+#def load_client_data(client_id, client_data_path):
     # Charger l'intégralité du fichier CSV en mémoire
-    data = pd.read_csv(client_data_path)
+   # data = pd.read_csv(client_data_path)
     # Filtrer les données pour obtenir uniquement l'entrée correspondant à l'ID client spécifié
-    filtered_data = data[data['SK_ID_CURR'] == client_id]
-    return filtered_data
+    #filtered_data = data[data['SK_ID_CURR'] == client_id]
+   # return filtered_data
 
  
 
@@ -66,10 +111,6 @@ def preprocess_data(data):
     data = replace_infinities(data)
     print(data.columns)
 
-    # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
-    if 'SK_ID_CURR' in data.columns:
-        data['SK_ID_CURR'] = data['SK_ID_CURR'].astype(float).astype(int)
-
     # Nettoyer les noms des caractéristiques
     data_cleaned = clean_feature_names(data)
     data_final = clean_feature_names_two(data_cleaned)
@@ -77,25 +118,23 @@ def preprocess_data(data):
 
 
 
-
 #####################prediction 
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['GET'])
 def predict():
-    app.logger.debug(f"Received JSON: {request.json}")
-    content = request.json
-    try:
-        # Assurez-vous que client_id est un entier
-        client_id = int(content['client_id'])
-    except (ValueError, TypeError, KeyError):
-        # Retourner une erreur si la conversion échoue ou si client_id est manquant
-        return jsonify({'error': 'client_id doit être un entier'}), 400
-
-    # Chemin vers votre fichier de données (ajustez selon votre configuration)
-    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
     
+    app.logger.debug("Received request with arguments: %s", request.args)
+
+    # Assurez-vous que client_id est un entier et présent dans les paramètres de l'URL
+    try:
+        client_id = int(request.args['client_id'])
+    except (ValueError, KeyError):
+        # Retourner une erreur si la conversion échoue ou si client_id est manquant
+        return jsonify({'error': 'client_id doit être un entier et présent'}), 400
+
+
     # Charger les données complètes du client
-    client_data = load_client_data(client_id, client_data_path)
+    client_data = clients_df.loc[[client_id]]
     
     # Si aucune donnée n'est trouvée pour le client_id donné, renvoyez une erreur
     if client_data.empty:
@@ -116,21 +155,24 @@ def predict():
     
     feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
 
-    # Génération des valeurs SHAP et prédiction
-    explainer = shap.Explainer(pipeline.named_steps['classifier'])
+   # Génération des valeurs SHAP et prédiction
+    #explainer = shap.Explainer(pipeline.named_steps['classifier'])
+ 
+    # Calculer les valeurs SHAP pour chaque prédiction
+    explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
     shap_values = explainer.shap_values(data_preprocessed)
-    explanation = shap.Explanation(values=shap_values, data=data_preprocessed,base_values=expected_value, feature_names=feature_names)
 
-    # Générez le plot SHAP (par exemple, un waterfall plot pour le premier échantillon)
-    plt.figure()
-    shap.plots.waterfall(explanation[0], max_display=10)  # Modifier selon besoin
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    plt.close()
-    buf.seek(0)
-    
-    # Encodez l'image en base64
-    image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+   # Créer un graphique SHAP
+    shap.summary_plot(shap_values, features=features_values, feature_names=feature_names, show=False)
+    plt.tight_layout()
+    # Enregistrer le graphique dans un buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    # Convertir l'image en base64
+    image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
     
     results = {
         "prediction": int(prediction[0]),
@@ -144,24 +186,14 @@ def predict():
 
 
 
-
 ############### all client info
 
 @app.route('/get-all-client-info', methods=['GET'])  
 def get_all_client_info():
-    # Chemin vers fichier de données
-    client_data_path = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\Projet_7_version_3\\données_pour_model.csv'
-    
-    # Charger les données complètes
-    client_data = pd.read_csv(client_data_path)
-    
-    # Sélectionner les 20 premiere colonnes 
-    client_data = client_data.iloc[:,:20]  # Optionnel, selon votre besoin
-    
-    # Convertir le DataFrame en dictionnaire pour le jsonify
-    # Utiliser orient='records' pour obtenir une liste de dictionnaires
-    data_dict = client_data.to_dict(orient='records')
-    
+
+    # Utiliser orient='records' pour obtenir un dictionnaires
+    data_dict = clients_df.iloc[:,:20].to_dict(orient='records')
+
     return jsonify(data_dict)
 
 
@@ -172,7 +204,7 @@ for rule in app.url_map.iter_rules():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='localhost', port=5000)
+    app.run()
 
 
    

@@ -14,18 +14,8 @@ import base64
 from PIL import Image
 import io
 import streamlit.components.v1 as components
+import os
 
-
-# URL de votre API Flask
-api_url = "http://naouel.pythonanywhere.com/"
-
-# Faire une requête GET
-response = requests.get(api_url)
-if response.status_code == 200:
-    data = response.json()
-    # Traiter les données
-else:
-    st.error("Failed to retrieve data")
 
 
     
@@ -48,7 +38,8 @@ st.header('Objectif du Dashboard')
 st.write("Ce dashboard offre une plateforme interactive permettant une analyse approfondie et une visualisation intuitive des profils clients.\n\nConçu pour être accessible aux non-experts en data science, il fournit des scores détaillés et des interprétations claires pour chaque client, enrichissant la compréhension sans nécessiter de connaissances techniques approfondies.")
 
 st.header('Présentation des features importance globale du modele')
-image = 'C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\shap_global.png'
+image = Image.open(os.path.abspath('./shap_global.png'))
+
 st.image(image, caption='model global features importance ')
 st.text("Description alternative de l'image : Présentation des features importance globale du modèle.")
 
@@ -108,21 +99,26 @@ if st.button('Prédire'):
     if client_id_input:
         try:
             client_id_int = int(client_id_input)
-            response = requests.post('http://naouel.pythonanywhere.com/predict', json={'client_id': client_id_int})
+            response = requests.get('http://naouel.pythonanywhere.com/predict',  params={'client_id': client_id_int})
             if response.status_code == 200:
-                data = response.json()
-                prediction = data['prediction']
-                probability_of_default = data.get('probability_of_default', 0)
-                st.session_state['prediction_result'] = prediction
-                st.session_state['probability_of_default'] = probability_of_default
-                display_prediction_result(prediction, probability_of_default)
+                if response.text: # Vérifiez si la réponse n'est pas vide
+                    data = response.json()
+                    prediction = data['prediction']
+                    probability_of_default = data.get('probability_of_default', 0)
+                    st.session_state['prediction_result'] = prediction
+                    st.session_state['probability_of_default'] = probability_of_default
+                    display_prediction_result(prediction, probability_of_default)
+                else:
+                    st.error("La réponse de l'API est vide.")
 
                 if 'shap_image' in data:
                     shap_image_base64 = data['shap_image']
                     shap_image = Image.open(io.BytesIO(base64.b64decode(shap_image_base64)))
                     st.image(shap_image, caption='SHAP Visualization')
             else:
-                st.error('Une erreur est survenue lors de la prédiction.')
+                st.error('Une erreur est survenue lors de la prédiction. Code d\'erreur : {}'.format(response.status_code))
+                st.text("Détails de l'erreur : " + response.text)
+
         except ValueError:
             st.error("L'ID client doit être un nombre entier.")
     else:
@@ -132,8 +128,17 @@ if st.button('Prédire'):
 display_prediction_if_available()
 
 #################### Bouton pour récupérer toutes les données et afficher le plot
-st.session_state['selected_client_id'] = client_id_input
-            
+
+   
+if client_id_input:
+    try:
+        st.session_state['selected_client_id'] = int(client_id_input)  # S'assurer que l'ID est un entier
+    except ValueError:
+        st.error("L'ID client doit être un nombre entier.")
+else:
+    st.warning("Veuillez entrer un ID client.")
+
+   
 if 'data' not in st.session_state or st.button('Charger les données'):
     response = requests.get('http://naouel.pythonanywhere.com/get-all-client-info')
     if response.status_code == 200:
@@ -208,7 +213,6 @@ if 'data' in st.session_state:
             plt.close('all')
             # Changement du backend
             plt.switch_backend('Agg')
-
     
 
 
