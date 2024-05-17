@@ -23,15 +23,19 @@ from flask import abort
 
 
 app = Flask(__name__)
-#CORS(app)
+CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 
 
-# Chemin vers fichier de données
-#client_data_path = os.path.abspath('./données_pour_model.csv')
-#
+
+# URLs directes vers vos fichiers GitHub (raw links)
+#data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/donn%C3%A9es_pour_model.csv'
+#model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
+
+
+# Fonction pour télécharger un fichier depuis GitHub
 def download_file_from_github(url, destination):
     response = requests.get(url)
     if response.status_code == 200:
@@ -40,27 +44,22 @@ def download_file_from_github(url, destination):
     else:
         raise Exception(f"Failed to download file from {url}")
 
-
 # URLs directes vers vos fichiers GitHub (raw links)
 data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/donn%C3%A9es_pour_model.csv'
 model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
-# Chemins de destination
+
+# Chemins de destination locaux
 data_path = './données_pour_model.csv'
-model_path = './models/mon_pipeline_complet.joblib'
+model_path = './mon_pipeline_complet.joblib'
 
 # Télécharger les fichiers
-client_data_path = download_file_from_github(data_url, data_path)
-pipeline = download_file_from_github(model_url, model_path)
+download_file_from_github(data_url, data_path)
+download_file_from_github(model_url, model_path)
 
 # Charger les données et le modèle
-# Charger les données
-#client_data_path = os.path.abspath('./données_pour_model.csv')
-data = pd.read_csv(client_data_path)
-
-# Charger le modèle
-#pipeline = load(os.path.abspath('./mon_pipeline_complet.joblib'))
-
-clients_df = pd.read_csv(client_data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
+data = pd.read_csv(data_path)
+pipeline = load(model_path)
+clients_df = pd.read_csv(data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
 if 'SK_ID_CURR' in clients_df.columns:
     clients_df['SK_ID_CURR'] = clients_df['SK_ID_CURR'].astype(float).astype(int)
@@ -194,7 +193,7 @@ for rule in app.url_map.iter_rules():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug= True)
 
 
    
