@@ -49,8 +49,8 @@ data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/
 model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
 
 # Chemins de destination locaux
-data_path = './données_pour_model.csv'
-model_path = './mon_pipeline_complet.joblib'
+data_path = os.path.abspath('./données_pour_model.csv')
+model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
 
 # Télécharger les fichiers
 download_file_from_github(data_url, data_path)
