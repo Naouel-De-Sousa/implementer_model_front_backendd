@@ -20,7 +20,7 @@ import base64
 from io import BytesIO
 import lightgbm as lgb
 from flask import abort
-
+import git
 
 app = Flask(__name__)
 CORS(app)
@@ -28,32 +28,27 @@ CORS(app)
 # Utilise un cache en mémoire
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 
+# URL vers votre dépôt GitHub
+repo_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd.git'
 
+# Chemin local où cloner le dépôt
+clone_dir = os.path.abspath('./cloned_repo')
 
-# URLs directes vers vos fichiers GitHub (raw links)
-#data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/donn%C3%A9es_pour_model.csv'
-#model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
-
-
-# Fonction pour télécharger un fichier depuis GitHub
-def download_file_from_github(url, destination):
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(destination, 'wb') as file:
-            file.write(response.content)
+# Fonction pour cloner le dépôt GitHub
+def clone_repo(repo_url, clone_dir):
+    if not os.path.exists(clone_dir):
+        os.makedirs(clone_dir)
+        repo = git.Repo.clone_from(repo_url, clone_dir)
     else:
-        raise Exception(f"Failed to download file from {url}")
+        repo = git.Repo(clone_dir)
+        repo.remote().pull()
 
-# URLs directes vers vos fichiers GitHub (raw links)
-data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/donn%C3%A9es_pour_model.csv'
-model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/models/mon_pipeline_complet.joblib'
-# Chemins de destination locaux
-data_path = os.path.abspath('./données_pour_model.csv')
-model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
+clone_repo(repo_url, clone_dir)
 
-# Télécharger les fichiers
-download_file_from_github(data_url, data_path)
-download_file_from_github(model_url, model_path)
+# Chemins vers vos fichiers dans le dépôt cloné
+data_path = os.path.join(clone_dir, 'données_pour_model.csv')
+model_path = os.path.join(clone_dir, 'models/mon_pipeline_complet.joblib')
+
 
 # Charger les données et le modèle
 data = pd.read_csv(data_path)
@@ -66,9 +61,6 @@ if 'SK_ID_CURR' in clients_df.columns:
 
 # URL de votre modèle sur GitHub (lien direct/raw)
 #pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
-
-
-#pipeline = load('C:\\Users\\naoue\\Documents\\OpenClassroomDataScientist\\projet_7_version_3\\models\\mon_pipeline_complet.joblib')
 
 ######################
 @app.route('/')

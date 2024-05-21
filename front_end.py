@@ -86,12 +86,6 @@ def display_prediction_if_available():
 client_id_input = st.text_input('Entrez l\'ID client:', '', key='unique_client_id_input_key')
 
 
-
-def display_html_file_in_streamlit(html_file_path):
-    HtmlFile = open(html_file_path, 'r', encoding='utf-8')
-    source_code = HtmlFile.read() 
-    components.html(source_code, height=600)
-
 #################### Bouton pour les predictions
 
 # Bouton pour déclencher la prédiction
@@ -229,3 +223,8 @@ if 'data' in st.session_state:
 
 
 
+
+def display_html_file_in_streamlit(html_file_path):
+    HtmlFile = open(html_file_path, 'r', encoding='utf-8')
+    source_code = HtmlFile.read() 
+    components.html(source_code, height=600)
