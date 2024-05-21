@@ -28,32 +28,15 @@ CORS(app)
 # Utilise un cache en mémoire
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 
-# URL vers votre dépôt GitHub
-repo_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd.git'
-
-# Chemin local où cloner le dépôt
-clone_dir = os.path.abspath('./cloned_repo')
-
-# Fonction pour cloner le dépôt GitHub
-def clone_repo(repo_url, clone_dir):
-    if not os.path.exists(clone_dir):
-        os.makedirs(clone_dir)
-        repo = git.Repo.clone_from(repo_url, clone_dir)
-    else:
-        repo = git.Repo(clone_dir)
-        repo.remote().pull()
-
-clone_repo(repo_url, clone_dir)
-
-# Chemins vers vos fichiers dans le dépôt cloné
-data_path = os.path.join(clone_dir, 'données_pour_model.csv')
-model_path = os.path.join(clone_dir, 'models/mon_pipeline_complet.joblib')
-
+# URLs directes vers vos fichiers GitHub (raw links)
+data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/donn%C3%A9es_pour_model.csv'
+model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/models/mon_pipeline_complet.joblib'
 
 # Charger les données et le modèle
-data = pd.read_csv(data_path)
-pipeline = load(model_path)
-clients_df = pd.read_csv(data_path, skiprows=[6])  # Ignorer la ligne 7 spécifiquement
+clients_df = pd.read_csv(data_url, skiprows=[6])
+response = requests.get(model_url)
+pipeline = load(BytesIO(response.content))
+
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
 if 'SK_ID_CURR' in clients_df.columns:
     clients_df['SK_ID_CURR'] = clients_df['SK_ID_CURR'].astype(float).astype(int)
