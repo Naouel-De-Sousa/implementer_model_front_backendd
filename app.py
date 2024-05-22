@@ -16,6 +16,7 @@ import base64
 import io
 import requests
 import os
+import logging
 import base64
 from io import BytesIO
 import lightgbm as lgb
@@ -27,6 +28,10 @@ CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
+# Configurer la journalisation
+logging.basicConfig(level=logging.DEBUG)
+
+
 
 # Fonction pour télécharger un fichier depuis GitHub
 def download_file_from_github(url, destination):
@@ -45,17 +50,31 @@ model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd
 
 # Chemins de destination locaux
 data_path = os.path.abspath('./données_pour_model.csv')
-model_path = os.path.abspath('./mon_pipeline_complet.joblib')
+model_dir = os.path.abspath('./models')
+model_path = os.path.join(model_dir, 'mon_pipeline_complet.joblib')
 
-# Télécharger les fichiers
+# Créer le répertoire models s'il n'existe pas
+os.makedirs(model_dir, exist_ok=True)
+
+# Télécharger les fichiers de données
 clients_df = download_file_from_github(data_url, data_path)
+
+# Télécharger le modèle
+logging.info(f"Téléchargement du modèle depuis {model_url}")
 response = requests.get(model_url)
 if response.status_code == 200:
     with open(model_path, 'wb') as file:
         file.write(response.content)
-    pipeline = load(model_path)
+    logging.info(f"Modèle téléchargé avec succès et enregistré à {model_path}")
+    try:
+        pipeline = load(model_path)
+        logging.info("Modèle chargé avec succès")
+    except Exception as e:
+        logging.error(f"Erreur lors du chargement du modèle : {e}")
+        raise e
 else:
     raise Exception(f"Failed to download file from {model_url}")
+
 
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
 if 'SK_ID_CURR' in clients_df.columns:
