@@ -32,7 +32,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # Chemins de destination locaux
 clients_df = os.path.abspath('./données_pour_model.csv')
-pipeline = os.path.abspath('./models/mon_pipeline_complet.joblib')
+pipeline = os.path.abspath('./mon_pipeline_complet.joblib')
 
 
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
