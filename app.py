@@ -28,52 +28,11 @@ CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
-# Configurer la journalisation
-logging.basicConfig(level=logging.DEBUG)
 
-
-
-# Fonction pour télécharger un fichier depuis GitHub
-def download_file_from_github(url, destination):
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(destination, 'wb') as file:
-            file.write(response.content)
-        # Spécifiez le séparateur si nécessaire, par exemple, si le séparateur est ';' au lieu de ','
-        return pd.read_csv(destination, sep=',', error_bad_lines=False, warn_bad_lines=True)  # Ignore les lignes mal formées
-    else:
-        raise Exception(f"Failed to download file from {url}")
-
-# url direct
-data_url = 'https://raw.githubusercontent.com/Naouel-De-Sousa/implementer_model_front_backendd/master/donn%C3%A9es_pour_model.csv'
-model_url = 'https://raw.githubusercontent.com/Naouel-De-Sousa/implementer_model_front_backendd/master/models/mon_pipeline_complet.joblib'
 
 # Chemins de destination locaux
-data_path = os.path.abspath('./données_pour_model.csv')
-model_dir = os.path.abspath('./models')
-model_path = os.path.join(model_dir, 'mon_pipeline_complet.joblib')
-
-# Créer le répertoire models s'il n'existe pas
-os.makedirs(model_dir, exist_ok=True)
-
-# Télécharger les fichiers de données
-clients_df = download_file_from_github(data_url, data_path)
-
-# Télécharger le modèle
-logging.info(f"Téléchargement du modèle depuis {model_url}")
-response = requests.get(model_url)
-if response.status_code == 200:
-    with open(model_path, 'wb') as file:
-        file.write(response.content)
-    logging.info(f"Modèle téléchargé avec succès et enregistré à {model_path}")
-    try:
-        pipeline = load(model_path)
-        logging.info("Modèle chargé avec succès")
-    except Exception as e:
-        logging.error(f"Erreur lors du chargement du modèle : {e}")
-        raise e
-else:
-    raise Exception(f"Failed to download file from {model_url}")
+clients_df = os.path.abspath('./données_pour_model.csv')
+pipeline = os.path.abspath('./models/mon_pipeline_complet.joblib')
 
 
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
