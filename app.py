@@ -29,8 +29,11 @@ CORS(app)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 
 # URLs directes vers vos fichiers GitHub (raw links)
-data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/donn%C3%A9es_pour_model.csv'
-model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/models/mon_pipeline_complet.joblib'
+#data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/donn%C3%A9es_pour_model.csv'
+#model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/models/mon_pipeline_complet.joblib'
+
+data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/master/donn%C3%A9es_pour_model.csv'
+model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/master/models/mon_pipeline_complet.joblib'
 
 # Charger les données et le modèle
 clients_df = pd.read_csv(data_url, skiprows=[6])
