@@ -34,7 +34,8 @@ def download_file_from_github(url, destination):
     if response.status_code == 200:
         with open(destination, 'wb') as file:
             file.write(response.content)
-        return pd.read_csv(destination)
+        # Spécifiez le séparateur si nécessaire, par exemple, si le séparateur est ';' au lieu de ','
+        return pd.read_csv(destination, sep=',', on_bad_lines='skip')  # Ignore les lignes mal formées
     else:
         raise Exception(f"Failed to download file from {url}")
 
