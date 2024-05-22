@@ -28,17 +28,31 @@ CORS(app)
 # Utilise un cache en mémoire
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 
-# URLs directes vers vos fichiers GitHub (raw links)
-#data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/donn%C3%A9es_pour_model.csv'
-#model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/models/mon_pipeline_complet.joblib'
+# Fonction pour télécharger un fichier depuis GitHub
+def download_file_from_github(url, destination):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            with open(destination, 'wb') as file:
+                file.write(response.content)
+        else:
+            raise Exception(f"Failed to download file from {url}")
+    except Exception as e:
+        app.logger.error(f"Error downloading file from {url}: {e}")
+        raise
 
+# URLs directes vers vos fichiers GitHub (raw links)
 data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/master/donn%C3%A9es_pour_model.csv'
 model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/master/models/mon_pipeline_complet.joblib'
 
-# Charger les données et le modèle
-clients_df = pd.read_csv(data_url, skiprows=[6])
-response = requests.get(model_url)
-pipeline = load(BytesIO(response.content))
+# Chemins de destination locaux
+data_path = os.path.abspath('./données_pour_model.csv')
+model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
+
+# Télécharger les fichiers
+clients_df = download_file_from_github(data_url, data_path)
+pipeline = download_file_from_github(model_url, model_path)
 
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
 if 'SK_ID_CURR' in clients_df.columns:
