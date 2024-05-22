@@ -44,9 +44,9 @@ def download_file_from_github(url, destination):
     else:
         raise Exception(f"Failed to download file from {url}")
 
-# URLs directes vers vos fichiers GitHub (raw links)
-data_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/donn%C3%A9es_pour_model.csv'
-model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/blob/master/models/mon_pipeline_complet.joblib'
+# url direct
+data_url = 'https://raw.githubusercontent.com/Naouel-De-Sousa/implementer_model_front_backendd/master/donn%C3%A9es_pour_model.csv'
+model_url = 'https://raw.githubusercontent.com/Naouel-De-Sousa/implementer_model_front_backendd/master/models/mon_pipeline_complet.joblib'
 
 # Chemins de destination locaux
 data_path = os.path.abspath('./données_pour_model.csv')
