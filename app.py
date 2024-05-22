@@ -31,10 +31,11 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 
 # Chemins de destination locaux
-clients_df = os.path.abspath('./données_pour_model.csv')
-pipeline = os.path.abspath('./mon_pipeline_complet.joblib')
+data_path = os.path.abspath('./données_pour_model.csv')
+model_path = os.path.abspath('./mon_pipeline_complet.joblib')
 
-
+clients_df = pd.read_csv(data_path)
+pipeline = load(model_path)
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
 if 'SK_ID_CURR' in clients_df.columns:
     clients_df['SK_ID_CURR'] = clients_df['SK_ID_CURR'].astype(float).astype(int)
