@@ -38,17 +38,18 @@ model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
 
 clients_df = pd.read_csv(data_path)
 # Debugging statement
-print(f"Loading model from {model_path}")
 
-# Try loading the model with different mmap_mode
+logging.basicConfig(level=logging.DEBUG)
+# Try loading the model with different mmap_mode settings
 try:
+    logging.debug(f"Attempting to load model from {model_path} with mmap_mode=None")
     pipeline = joblib.load(model_path, mmap_mode=None)
-    print("Model loaded successfully with mmap_mode=None")
+    logging.debug("Model loaded successfully with mmap_mode=None")
 except KeyError as e:
-    print(f"KeyError: {e}")
+    logging.error(f"KeyError encountered: {e}")
     raise
 except Exception as e:
-    print(f"An error occurred: {e}")
+    logging.error(f"An error occurred while loading the model: {e}")
     raise
 
 
