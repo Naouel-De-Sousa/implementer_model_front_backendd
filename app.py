@@ -22,6 +22,8 @@ from io import BytesIO
 import lightgbm as lgb
 from flask import abort
 import git
+import joblib
+
 
 app = Flask(__name__)
 CORS(app)
@@ -35,7 +37,22 @@ data_path = os.path.abspath('./données_pour_model.csv')
 model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
 
 clients_df = pd.read_csv(data_path)
-pipeline = load(model_path)
+# Debugging statement
+print(f"Loading model from {model_path}")
+
+# Try loading the model with different mmap_mode
+try:
+    pipeline = joblib.load(model_path, mmap_mode=None)
+    print("Model loaded successfully with mmap_mode=None")
+except KeyError as e:
+    print(f"KeyError: {e}")
+    raise
+except Exception as e:
+    print(f"An error occurred: {e}")
+    raise
+
+
+
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
 if 'SK_ID_CURR' in clients_df.columns:
     clients_df['SK_ID_CURR'] = clients_df['SK_ID_CURR'].astype(float).astype(int)
