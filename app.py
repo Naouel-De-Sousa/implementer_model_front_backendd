@@ -32,7 +32,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # Chemins de destination locaux
 data_path = os.path.abspath('./données_pour_model.csv')
-model_path = os.path.abspath('./mon_pipeline_complet.joblib')
+model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
 
 clients_df = pd.read_csv(data_path)
 pipeline = load(model_path)
