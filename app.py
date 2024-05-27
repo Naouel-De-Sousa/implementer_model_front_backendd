@@ -183,7 +183,7 @@ for rule in app.url_map.iter_rules():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
 
 
    
