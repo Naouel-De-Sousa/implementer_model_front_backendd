@@ -25,6 +25,9 @@ import git
 import joblib
 
 
+# Appel du script pour télécharger les fichiers nécessaires
+os.system('python download_files.py')
+
 app = Flask(__name__)
 CORS(app)
 # Configuration de Flask-Caching
@@ -34,7 +37,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # Chemins de destination locaux
 data_path = os.path.abspath('./données_pour_model.csv')
-model_path = 'mon_pipeline_complet.joblib'
+model_path = './models/mon_pipeline_complet.joblib'
 
 clients_df = pd.read_csv(data_path)
 # Debugging statement
