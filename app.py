@@ -48,6 +48,12 @@ if 'SK_ID_CURR' in clients_df.columns:
     clients_df['SK_ID_CURR'] = clients_df['SK_ID_CURR'].astype(float).astype(int)
     clients_df.set_index('SK_ID_CURR', drop=False, inplace= True)
 
+app.logger.debug(f"DataFrame index: {clients_df.index}")
+app.logger.debug(f"DataFrame head: {clients_df.head()}")
+sample_client_ids = clients_df.index.tolist()[:5]
+app.logger.debug(f"Sample client IDs: {sample_client_ids}")
+
+
 # URL de votre modèle sur GitHub (lien direct/raw)
 #pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
 
@@ -94,13 +100,17 @@ def predict():
     
     app.logger.debug("Received request with arguments: %s", request.args)
 
-    # Assurez-vous que client_id est un entier et présent dans les paramètres de l'URL
+  # Assurez que client_id est un entier et présent dans les paramètres de l'URL
     try:
         client_id = int(request.args['client_id'])
+        app.logger.debug(f"Converted client_id: {client_id}")
     except (ValueError, KeyError):
-        # Retourner une erreur si la conversion échoue ou si client_id est manquant
         return jsonify({'error': 'client_id doit être un entier et présent'}), 400
-
+    
+    # Vérifiez si le client_id existe dans l'index
+    if client_id not in clients_df.index:
+        app.logger.debug(f"Client ID {client_id} not found in DataFrame index")
+        return jsonify({'error': f'Client ID {client_id} not found'}), 404
 
     # Charger les données complètes du client
     client_data = clients_df.loc[[client_id]]
