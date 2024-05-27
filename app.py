@@ -34,23 +34,12 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # Chemins de destination locaux
 data_path = os.path.abspath('./données_pour_model.csv')
-model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
+model_path = 'mon_pipeline_complet.joblib'
 
 clients_df = pd.read_csv(data_path)
 # Debugging statement
 
-logging.basicConfig(level=logging.DEBUG)
-# Try loading the model with different mmap_mode settings
-try:
-    logging.debug(f"Attempting to load model from {model_path} with mmap_mode=None")
-    pipeline = joblib.load(model_path, mmap_mode=None)
-    logging.debug("Model loaded successfully with mmap_mode=None")
-except KeyError as e:
-    logging.error(f"KeyError encountered: {e}")
-    raise
-except Exception as e:
-    logging.error(f"An error occurred while loading the model: {e}")
-    raise
+pipeline = load(model_path)
 
 
 
@@ -184,7 +173,7 @@ for rule in app.url_map.iter_rules():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
 
 
    
