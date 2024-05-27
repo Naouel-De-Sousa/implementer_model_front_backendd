@@ -39,7 +39,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 data_path = os.path.abspath('./données_pour_model.csv')
 model_path = './models/mon_pipeline_complet.joblib'
 
-clients_df = pd.read_csv(data_path)
+clients_df = pd.read_csv(data_path, sep = ',', error_bad_lines=False)
 # Debugging statement
 
 pipeline = load(model_path)
