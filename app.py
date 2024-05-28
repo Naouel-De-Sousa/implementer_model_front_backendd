@@ -21,7 +21,6 @@ import base64
 from io import BytesIO
 import lightgbm as lgb
 from flask import abort
-import git
 import joblib
 
 
@@ -39,7 +38,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 data_path = os.path.abspath('./données_pour_model.csv')
 model_path = './models/mon_pipeline_complet.joblib'
 
-clients_df = pd.read_csv(data_path, sep = ';', error_bad_lines=False)
+clients_df = pd.read_csv(data_path)
 # Debugging statement
 
 pipeline = load(model_path)
