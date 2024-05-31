@@ -130,7 +130,16 @@ def predict():
         app.logger.debug(f"Pipeline steps: {pipeline.steps}")
         classifier = pipeline.named_steps['classifier']
         app.logger.debug(f"Classifier type: {type(classifier)}")
-        app.logger.debug(f"Booster attributes: {dir(classifier._Booster)}")
+              # Ensure correct attribute is used
+        booster = classifier._Booster
+        app.logger.debug(f"Booster attributes: {dir(booster)}")
+        if hasattr(booster, 'handle'):
+            handle = booster.handle
+        elif hasattr(booster, '_handle'):
+            handle = booster._handle
+        else:
+            handle = None
+        app.logger.debug(f"Handle: {handle}")
         
 
         # les predictions
