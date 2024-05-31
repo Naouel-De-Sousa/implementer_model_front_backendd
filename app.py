@@ -125,46 +125,57 @@ def predict():
     cleaned_data = preprocess_data(client_data)
     features_values = cleaned_data.values.tolist()
 
-    # les predictions
-    prediction = pipeline.predict(cleaned_data).tolist()
-    probabilities = pipeline.predict_proba(cleaned_data)
-    probability_of_default = probabilities[0][1] * 100  # calculer les proba
-    
-    expected_value = np.mean(prediction) # pour shap
+    try:
+        # Detailed logging
+        app.logger.debug(f"Pipeline steps: {pipeline.steps}")
+        classifier = pipeline.named_steps['classifier']
+        app.logger.debug(f"Classifier type: {type(classifier)}")
+        app.logger.debug(f"Booster attributes: {dir(classifier._Booster)}")
+        
 
-    data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
-    
-    feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
+        # les predictions
+        prediction = pipeline.predict(cleaned_data).tolist()
+        probabilities = pipeline.predict_proba(cleaned_data)
+        probability_of_default = probabilities[0][1] * 100  # calculer les proba
+        
+        expected_value = np.mean(prediction) # pour shap
 
-   # Génération des valeurs SHAP et prédiction
-    #explainer = shap.Explainer(pipeline.named_steps['classifier'])
- 
-    # Calculer les valeurs SHAP pour chaque prédiction
-    explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
-    shap_values = explainer.shap_values(data_preprocessed)
+        data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
+        
+        feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
+
+    # Génération des valeurs SHAP et prédiction
+        #explainer = shap.Explainer(pipeline.named_steps['classifier'])
+
+        # Calculer les valeurs SHAP pour chaque prédiction
+        explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
+        shap_values = explainer.shap_values(data_preprocessed)
 
 
-   # Créer un graphique SHAP
-    shap.summary_plot(shap_values, features=features_values, feature_names=feature_names, show=False)
-    plt.tight_layout()
-    # Enregistrer le graphique dans un buffer
-    buffer = BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
+    # Créer un graphique SHAP
+        shap.summary_plot(shap_values, features=features_values, feature_names=feature_names, show=False)
+        plt.tight_layout()
+        # Enregistrer le graphique dans un buffer
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
 
-    # Convertir l'image en base64
-    image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    
-    results = {
-        "prediction": int(prediction[0]),
-        "shap_image": image_base64,  # Envoyez l'image encodée
-        "feature_names": feature_names,
-        "features": features_values ,
-        "probability_of_default":probability_of_default
-    }
+        # Convertir l'image en base64
+        image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        
+        results = {
+            "prediction": int(prediction[0]),
+            "shap_image": image_base64,  # Envoyez l'image encodée
+            "feature_names": feature_names,
+            "features": features_values ,
+            "probability_of_default":probability_of_default
+        }
 
-    return jsonify(results)
-
+        return jsonify(results)
+    except AttributeError as e:
+        app.logger.error(f"AttributeError encountered: {e}")
+        app.logger.error(f"Attributes of Booster object: {dir(pipeline.named_steps['classifier']._Booster)}")
+        return jsonify({'error': str(e)}), 500
 
 
 ############### all client info
