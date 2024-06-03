@@ -22,7 +22,8 @@ from io import BytesIO
 import lightgbm as lgb
 from flask import abort
 import joblib
-from custom_lightgbm import CustomBooster, load_custom_booster
+from custom_lightgbm import load_custom_pipeline
+
 
 
 # Appel du script pour télécharger les fichiers nécessaires
@@ -42,8 +43,8 @@ model_path = './models/mon_pipeline_complet.joblib'
 clients_df = pd.read_csv(data_path)
 # Debugging statement
 
-pipeline = load(model_path)
-
+#pipeline = load(model_path)
+pipeline = load_custom_pipeline(model_path)
 
 
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
