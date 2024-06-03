@@ -1,31 +1,21 @@
-from lightgbm import Booster as OriginalBooster
+from lightgbm import Booster as OriginalBooster, LGBMClassifier
 import joblib
-from lightgbm import LGBMClassifier
-import pandas as pd
-
 
 class CustomBooster(OriginalBooster):
-    def _to_predictor(self, pred_parameter):
-        if hasattr(self, '_handle'):
-            return self._Booster__inner_predictor(pred_parameter)
-        else:
-            raise AttributeError("'Booster' object has no attribute 'handle' or '_handle'")
-       
     def predict(self, data, *args, **kwargs):
-        # Ensure _handle is used if handle is not available
         if hasattr(self, '_handle'):
-            self.handle = self._handle
-        return super().predict(data, *args, **kwargs)
+            return super().predict(data, *args, **kwargs)
+        raise AttributeError("'Booster' object has no attribute '_handle'")
 
 class CustomLGBMClassifier(LGBMClassifier):
     def fit(self, *args, **kwargs):
         super().fit(*args, **kwargs)
-        self._Booster = CustomBooster(model_file=self.booster_.save_model_to_string())
+        self._Booster = CustomBooster(model_str=self.booster_.model_to_string())
         return self
 
 def wrap_booster(classifier):
     if hasattr(classifier, 'booster_'):
-        classifier._Booster = classifier.booster_
+        classifier._Booster = CustomBooster(model_str=classifier.booster_.model_to_string())
     return classifier
 
 def load_custom_pipeline(pipeline_path):
@@ -36,6 +26,5 @@ def load_custom_pipeline(pipeline_path):
             classifier = wrap_booster(classifier)
             pipeline.named_steps['classifier'] = classifier
     return pipeline
-
 
 

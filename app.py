@@ -132,11 +132,11 @@ def predict():
         classifier = pipeline.named_steps['classifier']
         app.logger.debug(f"Classifier type: {type(classifier)}")
 
-        # Ensure correct attribute is used
+        # Log the Booster attributes
         booster = classifier._Booster
         app.logger.debug(f"Booster attributes: {dir(booster)}")
-
-     # Ensure the correct attribute is used directly
+        
+        # Ensure the correct attribute is used directly
         handle = getattr(booster, '_handle', None)
         app.logger.debug(f"Using _handle: {handle}")
         
