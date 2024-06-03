@@ -22,7 +22,7 @@ from io import BytesIO
 import lightgbm as lgb
 from flask import abort
 import joblib
-from custom_lightgbm import load_custom_pipeline
+
 
 
 
@@ -43,8 +43,8 @@ model_path = './models/mon_pipeline_complet.joblib'
 clients_df = pd.read_csv(data_path)
 # Debugging statement
 
-#pipeline = load(model_path)
-pipeline = load_custom_pipeline(model_path)
+pipeline = load(model_path)
+
 
 
 # Vérifier si 'SK_ID_CURR' est dans le DataFrame et le convertir en int
@@ -128,14 +128,22 @@ def predict():
     features_values = cleaned_data.values.tolist()
 
     try:
+        # Detailed logging
         app.logger.debug(f"Pipeline steps: {pipeline.steps}")
         classifier = pipeline.named_steps['classifier']
         app.logger.debug(f"Classifier type: {type(classifier)}")
-
-        # Log the Booster attributes
+              # Ensure correct attribute is used
         booster = classifier._Booster
         app.logger.debug(f"Booster attributes: {dir(booster)}")
+        if hasattr(booster, 'handle'):
+            handle = booster.handle
+        elif hasattr(booster, '_handle'):
+            handle = booster._handle
+        else:
+            handle = None
+        app.logger.debug(f"Handle: {handle}")
         
+
         # les predictions
         prediction = pipeline.predict(cleaned_data).tolist()
         probabilities = pipeline.predict_proba(cleaned_data)
