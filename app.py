@@ -136,11 +136,6 @@ def predict():
         booster = classifier._Booster
         app.logger.debug(f"Booster attributes: {dir(booster)}")
         
-        # Ensure the correct attribute is used directly
-        handle = getattr(booster, '_handle', None)
-        app.logger.debug(f"Using _handle: {handle}")
-        
-
         # les predictions
         prediction = pipeline.predict(cleaned_data).tolist()
         probabilities = pipeline.predict_proba(cleaned_data)

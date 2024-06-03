@@ -1,11 +1,17 @@
-from lightgbm import Booster as OriginalBooster, LGBMClassifier
+from lightgbm import LGBMClassifier, Booster as OriginalBooster
 import joblib
 
 class CustomBooster(OriginalBooster):
+    def __init__(self, model_file=None, model_str=None):
+        if model_file:
+            super().__init__(model_file=model_file)
+        elif model_str:
+            super().__init__(model_str=model_str)
+        else:
+            raise ValueError("Either model_file or model_str must be provided")
+
     def predict(self, data, *args, **kwargs):
-        if hasattr(self, '_handle'):
-            return super().predict(data, *args, **kwargs)
-        raise AttributeError("'Booster' object has no attribute '_handle'")
+        return super().predict(data, *args, **kwargs)
 
 class CustomLGBMClassifier(LGBMClassifier):
     def fit(self, *args, **kwargs):
@@ -26,5 +32,6 @@ def load_custom_pipeline(pipeline_path):
             classifier = wrap_booster(classifier)
             pipeline.named_steps['classifier'] = classifier
     return pipeline
+
 
 
