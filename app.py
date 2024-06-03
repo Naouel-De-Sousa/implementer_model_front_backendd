@@ -22,6 +22,7 @@ from io import BytesIO
 import lightgbm as lgb
 from flask import abort
 import joblib
+from custom_lightgbm import CustomBooster, load_custom_booster
 
 
 # Appel du script pour télécharger les fichiers nécessaires
@@ -94,7 +95,9 @@ def preprocess_data(data):
     data_final = clean_feature_names_two(data_cleaned)
     return data_final
 
-
+# Load the custom booster
+classifier = pipeline.named_steps['classifier']
+classifier._Booster = load_custom_booster('./models/mon_pipeline_complet.joblib')
 #####################prediction 
 
 @app.route('/predict', methods=['GET'])
@@ -126,20 +129,13 @@ def predict():
     features_values = cleaned_data.values.tolist()
 
     try:
-        # Detailed logging
         app.logger.debug(f"Pipeline steps: {pipeline.steps}")
         classifier = pipeline.named_steps['classifier']
         app.logger.debug(f"Classifier type: {type(classifier)}")
-              # Ensure correct attribute is used
+
+        # Ensure correct attribute is used
         booster = classifier._Booster
         app.logger.debug(f"Booster attributes: {dir(booster)}")
-        if hasattr(booster, 'handle'):
-            handle = booster.handle
-        elif hasattr(booster, '_handle'):
-            handle = booster._handle
-        else:
-            handle = None
-        app.logger.debug(f"Handle: {handle}")
         
 
         # les predictions
