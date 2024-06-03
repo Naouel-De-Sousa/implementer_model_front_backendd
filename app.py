@@ -134,6 +134,10 @@ def predict():
         # Ensure correct attribute is used
         booster = classifier._Booster
         app.logger.debug(f"Booster attributes: {dir(booster)}")
+
+        # Ensure the correct attribute is used
+        if not hasattr(booster, 'handle') and hasattr(booster, '_handle'):
+            booster.handle = booster._handle
         
 
         # les predictions
