@@ -95,9 +95,7 @@ def preprocess_data(data):
     data_final = clean_feature_names_two(data_cleaned)
     return data_final
 
-# Load the custom booster
-classifier = pipeline.named_steps['classifier']
-classifier._Booster = load_custom_booster('./models/mon_pipeline_complet.joblib')
+
 #####################prediction 
 
 @app.route('/predict', methods=['GET'])
