@@ -4,9 +4,13 @@ import joblib
 class CustomBooster(OriginalBooster):
     def __init__(self, booster):
         self.__dict__.update(booster.__dict__)
+        self.handle = getattr(booster, 'handle', None) or getattr(booster, '_handle', None)
 
     def predict(self, data, *args, **kwargs):
-        return super().predict(data, *args, **kwargs)
+        if hasattr(self, 'handle') and self.handle is not None:
+            return super().predict(data, *args, **kwargs)
+        else:
+            raise AttributeError("'Booster' object has no attribute 'handle' or '_handle'")
 
 class CustomLGBMClassifier(LGBMClassifier):
     def fit(self, *args, **kwargs):
@@ -27,4 +31,3 @@ def load_custom_pipeline(pipeline_path):
             classifier = wrap_booster(classifier)
             pipeline.named_steps['classifier'] = classifier
     return pipeline
-
