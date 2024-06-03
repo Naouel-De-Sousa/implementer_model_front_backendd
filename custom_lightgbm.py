@@ -1,6 +1,7 @@
 from lightgbm import Booster as OriginalBooster
 import joblib
 from lightgbm import LGBMClassifier
+import pandas as pd
 
 
 class CustomBooster(OriginalBooster):
@@ -19,16 +20,22 @@ class CustomBooster(OriginalBooster):
 class CustomLGBMClassifier(LGBMClassifier):
     def fit(self, *args, **kwargs):
         super().fit(*args, **kwargs)
-        self._Booster = CustomBooster(self.booster_.model_to_string())
+        self._Booster = CustomBooster(model_file=self.booster_.save_model_to_string())
         return self
+
+def wrap_booster(classifier):
+    if hasattr(classifier, 'booster_'):
+        classifier._Booster = classifier.booster_
+    return classifier
 
 def load_custom_pipeline(pipeline_path):
     pipeline = joblib.load(pipeline_path)
     if 'classifier' in pipeline.named_steps:
         classifier = pipeline.named_steps['classifier']
         if isinstance(classifier, LGBMClassifier):
-            pipeline.named_steps['classifier'] = CustomLGBMClassifier(**classifier.get_params())
-            pipeline.named_steps['classifier']._Booster = CustomBooster(classifier.booster_.model_to_string())
+            classifier = wrap_booster(classifier)
+            pipeline.named_steps['classifier'] = classifier
     return pipeline
+
 
 
