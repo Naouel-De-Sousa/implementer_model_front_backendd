@@ -33,7 +33,8 @@ app = Flask(__name__)
 CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
+#cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
+cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
 
 
 # Chemins de destination locaux
