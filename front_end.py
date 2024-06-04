@@ -4,7 +4,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import streamlit as st
 import requests
-import seaborn as sns
+#import seaborn as sns
 import pandas as pd
 import numpy as np
 import shap
@@ -208,20 +208,6 @@ if 'data' in st.session_state:
             # Changement du backend
             plt.switch_backend('Agg')
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def display_html_file_in_streamlit(html_file_path):
