@@ -127,23 +127,8 @@ def predict():
     cleaned_data = preprocess_data(client_data)
     features_values = cleaned_data.values.tolist()
 
-    # try:
-    #     # Detailed logging
-    #     app.logger.debug(f"Pipeline steps: {pipeline.steps}")
-    #     classifier = pipeline.named_steps['classifier']
-    #     app.logger.debug(f"Classifier type: {type(classifier)}")
-    #           # Ensure correct attribute is used
-    #     booster = classifier._Booster
-    #     app.logger.debug(f"Booster attributes: {dir(booster)}")
-    #     if hasattr(booster, 'handle'):
-    #         handle = booster.handle
-    #     elif hasattr(booster, '_handle'):
-    #         handle = booster._handle
-    #     else:
-    #         handle = None
-    #     app.logger.debug(f"Handle: {handle}")
-        
 
+    
     # les predictions
     prediction = pipeline.predict(cleaned_data).tolist()
     probabilities = pipeline.predict_proba(cleaned_data)
@@ -183,10 +168,6 @@ def predict():
     }
 
     return jsonify(results)
-    # except AttributeError as e:
-    #     app.logger.error(f"AttributeError encountered: {e}")
-    #     app.logger.error(f"Attributes of Booster object: {dir(pipeline.named_steps['classifier']._Booster)}")
-    #     return jsonify({'error': str(e)}), 500
 
 
 ############### all client info
@@ -206,8 +187,8 @@ for rule in app.url_map.iter_rules():
 
 
 
-if __name__ == "__main__":
-    app.run()
+#if __name__ == "__main__":
+    #app.run()
 
 
    
