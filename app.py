@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import re
 from joblib import load
+from joblib import Parallel, delayed
 import pdb
 from flask_caching import Cache
 from flask_cors import CORS
@@ -25,8 +26,9 @@ import joblib
 
 
 
-
-# Appel du script pour télécharger les fichiers nécessaires
+# Configurer joblib
+os.environ["LOKY_MAX_CPU_COUNT"] = "4"  # Remplacez "4" par le nombre de cores logiques que vous souhaitez utiliser
+pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
 os.system('python download_files.py')
 
 app = Flask(__name__)
@@ -69,7 +71,7 @@ def home():
 
 # Remplacer les +inf/-inf par NaN
 def replace_infinities(data):
-    data.replace([np.inf, -np.inf], np.nan, inplace=True)
+    data.replace([np.inf, -np.inf], np.nan, inplace=True).infer_object(copy= False)
     return data
 
 def clean_feature_names(data):
@@ -187,6 +189,11 @@ for rule in app.url_map.iter_rules():
     print(f'{rule.endpoint}: {rule}')
 
 
+def some_long_running_function(i):
+    # Simulation d'une opération longue
+    import time
+    time.sleep(10)
+    return i
 
 #if __name__ == "__main__":
     #app.run()
