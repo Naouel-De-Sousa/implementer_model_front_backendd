@@ -26,9 +26,11 @@ import joblib
 
 
 
+pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
+
 # Configurer joblib
 os.environ["LOKY_MAX_CPU_COUNT"] = "4"  # Remplacez "4" par le nombre de cores logiques que vous souhaitez utiliser
-pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
+
 os.system('python download_files.py')
 
 app = Flask(__name__)
@@ -71,8 +73,8 @@ def home():
 
 # Remplacer les +inf/-inf par NaN
 def replace_infinities(data):
-    data.replace([np.inf, -np.inf], np.nan, inplace=True).infer_object(copy= False)
-    return data
+    data.replace([np.inf, -np.inf], np.nan, inplace=True)
+    return data.infer_objects(copy=False)
 
 def clean_feature_names(data):
     data.columns = ["".join(c if c.isalnum() else "_" for c in str(col)) for col in data.columns]
@@ -195,8 +197,8 @@ def some_long_running_function(i):
     time.sleep(10)
     return i
 
-#if __name__ == "__main__":
-    #app.run()
+if __name__ == "__main__":
+    app.run()
 
 
    
