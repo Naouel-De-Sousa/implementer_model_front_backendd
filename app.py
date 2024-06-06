@@ -1,6 +1,6 @@
 # Configurer joblib
 import os
-os.environ["LOKY_MAX_CPU_COUNT"] = "4"  # Remplacez "4" par le nombre de cores logiques que vous souhaitez utiliser
+os.environ["LOKY_MAX_CPU_COUNT"] = "6"  # Remplacez "4" par le nombre de cores logiques que vous souhaitez utiliser
 
 
 import matplotlib
@@ -27,6 +27,7 @@ from io import BytesIO
 import lightgbm as lgb
 from flask import abort
 import joblib
+from cachetools import cached, TTLCache
 
 
 
@@ -41,8 +42,14 @@ CORS(app)
 # Utilise un cache en mémoire
 #cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
+cache2 = TTLCache(maxsize=100, ttl=600)
 
-
+@cached(cache2)
+def some_long_running_function(i):
+    # Simulation d'une opération longue
+    import time
+    time.sleep(10)
+    return i
 # Chemins de destination locaux
 data_path = os.path.abspath('./données_pour_model.csv')
 model_path = './models/mon_pipeline_complet.joblib'
@@ -193,11 +200,6 @@ for rule in app.url_map.iter_rules():
     print(f'{rule.endpoint}: {rule}')
 
 
-def some_long_running_function(i):
-    # Simulation d'une opération longue
-    import time
-    time.sleep(10)
-    return i
 
 if __name__ == "__main__":
     app.run()
