@@ -41,10 +41,10 @@ CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
 #cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
-cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
-cache2 = TTLCache(maxsize=100, ttl=600)
+#cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
+cache = TTLCache(maxsize=100, ttl=600)
 
-@cached(cache2)
+@cached(cache)
 def some_long_running_function(i):
     # Simulation d'une opération longue
     import time
