@@ -41,7 +41,7 @@ CORS(app)
 #cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
 
-
+@cache.memoize(timeout=600)  # Mettre en cache pour 600 secondes (10 minutes)
 def some_long_running_function(i):
     # Simulation d'une opération longue
     import time
