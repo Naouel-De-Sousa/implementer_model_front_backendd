@@ -39,7 +39,7 @@ CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
 #cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
-cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
+cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/home/Naouel/cache'})
 
 @cache.memoize(timeout=600)  # Mettre en cache pour 600 secondes (10 minutes)
 def some_long_running_function(i):
