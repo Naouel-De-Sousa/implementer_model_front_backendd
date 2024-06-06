@@ -26,8 +26,6 @@ import base64
 from io import BytesIO
 import lightgbm as lgb
 from flask import abort
-import joblib
-from cachetools import cached, TTLCache
 
 
 
@@ -41,10 +39,9 @@ CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
 #cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
-#cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
-cache = TTLCache(maxsize=100, ttl=600)
+cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/tmp'})
 
-@cached(cache)
+
 def some_long_running_function(i):
     # Simulation d'une opération longue
     import time
