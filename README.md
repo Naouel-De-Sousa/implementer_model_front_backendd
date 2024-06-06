@@ -1,5 +1,28 @@
 "Projet 7" 
 
+
+
+# My Credit APP
+
+## Description
+Cette application est une API de prédiction de crédit utilisant Flask pour le backend et Streamlit pour le frontend. L'API permet de prédire la probabilité de défaut de paiement d'un client en utilisant un modèle de machine learning.
+
+## Table des Matières
+1. Prérequis
+2. Structure du Projet
+3. Installation
+4. Configuration
+5. Exécution
+6. Utilisation
+7. Endpoints de l'API
+
+
+## Prérequis
+- Python 3.9 
+- Flask
+- Streamlit
+- PythonAnywhere
+
 ## Structure du Projet
 
 ```
@@ -51,29 +74,6 @@
     templates
     test_app.py
 ```
-
-# My Credit APP
-
-## Description
-Cette application est une API de prédiction de crédit utilisant Flask pour le backend et Streamlit pour le frontend. L'API permet de prédire la probabilité de défaut de paiement d'un client en utilisant un modèle de machine learning.
-
-## Table des Matières
-1. Prérequis
-2. Installation
-3. Configuration
-4. Exécution
-5. Utilisation
-6. Structure du Projet
-7. Endpoints de l'API
-8. Contribuer
-9. License
-
-## Prérequis
-- Python 3.9 
-- Flask
-- Streamlit
-- PythonAnywhere
-
 
 #  Backend Flask
 
