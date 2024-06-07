@@ -145,7 +145,7 @@ def predict():
 
     print('before predict')
     # les predictions
-    prediction = pipeline.predict(cleaned_data).tolist()
+    #prediction = pipeline.predict(cleaned_data).tolist()
     print('after predict')
 
     
@@ -179,7 +179,7 @@ def predict():
     image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
     
     results = {
-        "prediction": int(prediction[0]),
+        #"prediction": int(prediction[0]),
         "shap_image": image_base64,  # Envoyez l'image encodée
         "feature_names": feature_names,
         "features": features_values ,
