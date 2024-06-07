@@ -105,6 +105,7 @@ def preprocess_data(data):
     # Nettoyer les noms des caractéristiques
     data_cleaned = clean_feature_names(data)
     data_final = clean_feature_names_two(data_cleaned)
+
     return data_final
 
 
@@ -133,19 +134,26 @@ def predict():
     # Si aucune donnée n'est trouvée pour le client_id donné, renvoyez une erreur
     if client_data.empty:
         return jsonify({'error': 'Client not found'}), 404
+    
 
+    print('before preprocess')
     # Prétraiter les données du client
     cleaned_data = preprocess_data(client_data)
+    print('after preprocess')
     features_values = cleaned_data.values.tolist()
 
 
-    
+    print('before predict')
     # les predictions
     prediction = pipeline.predict(cleaned_data).tolist()
+    print('after predict')
+
+    
     probabilities = pipeline.predict_proba(cleaned_data)
+    print('after predict proba')
     probability_of_default = probabilities[0][1] * 100  # calculer les proba
     
-    expected_value = np.mean(prediction) # pour shap
+    #expected_value = np.mean(prediction) # pour shap
 
     data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
     
@@ -195,7 +203,6 @@ def get_all_client_info():
 
 for rule in app.url_map.iter_rules():
     print(f'{rule.endpoint}: {rule}')
-
 
 
 if __name__ == "__main__":
