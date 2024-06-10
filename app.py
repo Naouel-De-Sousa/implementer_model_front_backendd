@@ -64,6 +64,8 @@ app.logger.debug(f"Sample client IDs: {sample_client_ids}")
 def home():
     return "Bienvenue sur l'API de prédiction de crédit !"
 
+
+############## Fonctions de traitement des données
 # Remplacer les +inf/-inf par NaN
 def replace_infinities(data):
     data.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -79,16 +81,11 @@ def clean_feature_names_two(df):
     return df.rename(columns=clean_names)
 
 
-
-
-############## Fonctions de traitement des données
 #réduire la charge sur le serveur pour des requêtes répétées
 @cache.memoize(timeout=300)  # Met en cache le résultat pour 300 secondes
 def preprocess_data(data):
     # Remplacer les infinis par NaN
     data = replace_infinities(data)
-    print(data.columns)
-
     # Nettoyer les noms des caractéristiques
     data_cleaned = clean_feature_names(data)
     data_final = clean_feature_names_two(data_cleaned)
@@ -100,7 +97,7 @@ def preprocess_data(data):
 #####################prediction 
 
 @app.route('/predict', methods=['GET'])
-@cache.cached(timeout=3600)  # Cache for 1 hour
+@cache.cached(timeout=600, query_string=True)
 
 def predict():
     app.logger.debug("Received request with arguments: %s", request.args)
@@ -129,7 +126,6 @@ def predict():
     features_values = cleaned_data.values.tolist()
 
 
-    print('before predict proba')
     # les predictions
     #prediction = pipeline.predict(cleaned_data).tolist()
     
@@ -139,12 +135,12 @@ def predict():
     
     #expected_value = np.mean(prediction) # pour shap
 
+
     data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
     feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
 
-    # Calculer les valeurs SHAP pour chaque prédiction
-    explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
-    shap_values = explainer.shap_values(data_preprocessed)
+    explainer = shap.Explainer(pipeline.named_steps['classifier'], data_preprocessed)
+    shap_values = explainer(data_preprocessed)
 
 
 # Créer un graphique SHAP
