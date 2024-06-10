@@ -1,8 +1,5 @@
 # Configurer joblib
 import os
-os.environ["LOKY_MAX_CPU_COUNT"] = "6"  # Remplacez "4" par le nombre de cores logiques que vous souhaitez utiliser
-
-
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -31,7 +28,6 @@ from flask import abort
 
 pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
 
-
 os.system('python download_files.py')
 
 app = Flask(__name__)
@@ -41,19 +37,12 @@ CORS(app)
 #cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
 cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/home/Naouel/cache'})
 
-@cache.memoize(timeout=600)  # Mettre en cache pour 600 secondes (10 minutes)
-def some_long_running_function(i):
-    # Simulation d'une opération longue
-    import time
-    time.sleep(10)
-    return i
+
 # Chemins de destination locaux
 data_path = os.path.abspath('./données_pour_model.csv')
 model_path = './models/mon_pipeline_complet.joblib'
 
 clients_df = pd.read_csv(data_path)
-# Debugging statement
-
 pipeline = load(model_path)
 
 
@@ -69,8 +58,6 @@ sample_client_ids = clients_df.index.tolist()[:5]
 app.logger.debug(f"Sample client IDs: {sample_client_ids}")
 
 
-# URL de votre modèle sur GitHub (lien direct/raw)
-#pipeline = load(os.path.abspath('./models/mon_pipeline_complet.joblib'))
 
 ######################
 @app.route('/')
@@ -91,12 +78,12 @@ def clean_feature_names_two(df):
     clean_names = {col: re.sub(r'[^\w\s]', '_', col) for col in df.columns}
     return df.rename(columns=clean_names)
 
-#réduire la charge sur le serveur pour des requêtes répétées
-@cache.memoize(timeout=300)  # Met en cache le résultat pour 300 secondes
+
 
 
 ############## Fonctions de traitement des données
-
+#réduire la charge sur le serveur pour des requêtes répétées
+@cache.memoize(timeout=300)  # Met en cache le résultat pour 300 secondes
 def preprocess_data(data):
     # Remplacer les infinis par NaN
     data = replace_infinities(data)
@@ -109,11 +96,11 @@ def preprocess_data(data):
     return data_final
 
 
+
 #####################prediction 
 
 @app.route('/predict', methods=['GET'])
 def predict():
-    
     app.logger.debug("Received request with arguments: %s", request.args)
 
 # Assurez que client_id est un entier et présent dans les paramètres de l'URL
@@ -135,40 +122,27 @@ def predict():
     if client_data.empty:
         return jsonify({'error': 'Client not found'}), 404
     
-
-    print('before preprocess')
     # Prétraiter les données du client
     cleaned_data = preprocess_data(client_data)
-    print('after preprocess')
     features_values = cleaned_data.values.tolist()
 
 
-    print('before predict')
+    print('before predict proba')
     # les predictions
-    try:
-        prediction = pipeline.predict(cleaned_data).tolist()
-        probabilities = pipeline.predict_proba(cleaned_data)
-        probability_of_default = probabilities[0][1] * 100  # calculer les proba
-    except Exception as e:
-        app.logger.error(f"Error during prediction: {str(e)}")
-        return jsonify({'error': 'Erreur lors de la prédiction'}), 500
-
-    print('after predict')
+    #prediction = pipeline.predict(cleaned_data).tolist()
+    
+    probabilities = pipeline.predict_proba(cleaned_data)
+    print('after predict proba')
+    probability_of_default = probabilities[0][1] * 100  # calculer les proba
     
     #expected_value = np.mean(prediction) # pour shap
 
     data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
-    
     feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
 
-
     # Calculer les valeurs SHAP pour chaque prédiction
-
-    with parallel_backend('threading', n_jobs=6):
-        explainer = shap.Explainer(pipeline.named_steps['classifier'], data_preprocessed)
-        shap_values = explainer.shap_values(data_preprocessed)
-    #explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
-    #shap_values = explainer.shap_values(data_preprocessed)
+    explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
+    shap_values = explainer.shap_values(data_preprocessed)
 
 
 # Créer un graphique SHAP
@@ -205,11 +179,8 @@ def get_all_client_info():
 
 
 
-for rule in app.url_map.iter_rules():
-    print(f'{rule.endpoint}: {rule}')
-
-
 if __name__ == "__main__":
     app.run()
+
 
 
