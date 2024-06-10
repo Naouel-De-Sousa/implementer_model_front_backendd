@@ -34,8 +34,8 @@ app = Flask(__name__)
 CORS(app)
 # Configuration de Flask-Caching
 # Utilise un cache en mémoire
-#cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
-cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/home/Naouel/cache'})
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
+#cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/home/Naouel/cache'})
 
 
 # Chemins de destination locaux
@@ -100,6 +100,8 @@ def preprocess_data(data):
 #####################prediction 
 
 @app.route('/predict', methods=['GET'])
+@cache.cached(timeout=3600)  # Cache for 1 hour
+
 def predict():
     app.logger.debug("Received request with arguments: %s", request.args)
 
@@ -179,8 +181,8 @@ def get_all_client_info():
 
 
 
-if __name__ == "__main__":
-    app.run()
+# if __name__ == "__main__":
+#     app.run()
 
 
 
