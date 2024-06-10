@@ -135,31 +135,47 @@ def predict():
     
     #expected_value = np.mean(prediction) # pour shap
 
-
     data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
     feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
 
-    explainer = shap.Explainer(pipeline.named_steps['classifier'], data_preprocessed)
-    shap_values = explainer(data_preprocessed)
+    try:
+        app.logger.debug("Starting predict_proba")
+        probabilities = pipeline.predict_proba(cleaned_data)
+        app.logger.debug("Completed predict_proba")
+    except Exception as e:
+        app.logger.error(f"Error during predict_proba: {e}")
+        return jsonify({'error': 'Prediction error'}), 500
 
+    probability_of_default = probabilities[0][1] * 100
 
-# Créer un graphique SHAP
-    shap.summary_plot(shap_values, features=features_values, feature_names=feature_names, show=False)
-    plt.tight_layout()
-    # Enregistrer le graphique dans un buffer
-    buffer = BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
+    try:
+        app.logger.debug("Starting SHAP calculation")
+        data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
+        feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
+        explainer = shap.Explainer(pipeline.named_steps['classifier'], data_preprocessed)
+        shap_values = explainer(data_preprocessed)
+        app.logger.debug("Completed SHAP calculation")
+    except Exception as e:
+        app.logger.error(f"Error during SHAP calculation: {e}")
+        return jsonify({'error': 'SHAP calculation error'}), 500
 
-    # Convertir l'image en base64
-    image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    
+    try:
+        shap.summary_plot(shap_values, features=features_values, feature_names=feature_names, show=False)
+        plt.tight_layout()
+        buffer = BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        plt.close()
+    except Exception as e:
+        app.logger.error(f"Error during SHAP plot generation: {e}")
+        return jsonify({'error': 'SHAP plot generation error'}), 500
+
     results = {
-        #"prediction": int(prediction[0]),
-        "shap_image": image_base64,  # Envoyez l'image encodée
+        "shap_image": image_base64,
         "feature_names": feature_names,
-        "features": features_values ,
-        "probability_of_default":probability_of_default
+        "features": features_values,
+        "probability_of_default": probability_of_default
     }
 
     return jsonify(results)
