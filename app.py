@@ -145,13 +145,15 @@ def predict():
 
     print('before predict')
     # les predictions
-    #prediction = pipeline.predict(cleaned_data).tolist()
-    print('after predict')
+    try:
+        prediction = pipeline.predict(cleaned_data).tolist()
+        probabilities = pipeline.predict_proba(cleaned_data)
+        probability_of_default = probabilities[0][1] * 100  # calculer les proba
+    except Exception as e:
+        app.logger.error(f"Error during prediction: {str(e)}")
+        return jsonify({'error': 'Erreur lors de la prédiction'}), 500
 
-    
-    probabilities = pipeline.predict_proba(cleaned_data)
-    print('after predict proba')
-    probability_of_default = probabilities[0][1] * 100  # calculer les proba
+    print('after predict')
     
     #expected_value = np.mean(prediction) # pour shap
 
@@ -159,12 +161,14 @@ def predict():
     
     feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
 
-# Génération des valeurs SHAP et prédiction
-    #explainer = shap.Explainer(pipeline.named_steps['classifier'])
 
     # Calculer les valeurs SHAP pour chaque prédiction
-    explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
-    shap_values = explainer.shap_values(data_preprocessed)
+
+    with parallel_backend('threading', n_jobs=6):
+        explainer = shap.Explainer(pipeline.named_steps['classifier'], data_preprocessed)
+        shap_values = explainer.shap_values(data_preprocessed)
+    #explainer = shap.Explainer(pipeline.named_steps['classifier'], pipeline.named_steps['preprocessor'].transform(cleaned_data))
+    #shap_values = explainer.shap_values(data_preprocessed)
 
 
 # Créer un graphique SHAP
