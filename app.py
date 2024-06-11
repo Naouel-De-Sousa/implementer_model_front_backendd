@@ -96,47 +96,29 @@ def preprocess_data(data):
 
 #####################prediction 
 
+
 @app.route('/predict', methods=['GET'])
 @cache.cached(timeout=600, query_string=True)
-
 def predict():
     app.logger.debug("Received request with arguments: %s", request.args)
 
-# Assurez que client_id est un entier et présent dans les paramètres de l'URL
     try:
         client_id = int(request.args['client_id'])
         app.logger.debug(f"Converted client_id: {client_id}")
     except (ValueError, KeyError):
         return jsonify({'error': 'client_id doit être un entier et présent'}), 400
-    
-    # Vérifiez si le client_id existe dans l'index
+
     if client_id not in clients_df.index:
         app.logger.debug(f"Client ID {client_id} not found in DataFrame index")
         return jsonify({'error': f'Client ID {client_id} not found'}), 404
 
-    # Charger les données complètes du client
     client_data = clients_df.loc[[client_id]]
-    
-    # Si aucune donnée n'est trouvée pour le client_id donné, renvoyez une erreur
+
     if client_data.empty:
         return jsonify({'error': 'Client not found'}), 404
-    
-    # Prétraiter les données du client
+
     cleaned_data = preprocess_data(client_data)
     features_values = cleaned_data.values.tolist()
-
-
-    # les predictions
-    #prediction = pipeline.predict(cleaned_data).tolist()
-    
-    probabilities = pipeline.predict_proba(cleaned_data)
-    print('after predict proba')
-    probability_of_default = probabilities[0][1] * 100  # calculer les proba
-    
-    #expected_value = np.mean(prediction) # pour shap
-
-    data_preprocessed = pipeline.named_steps['preprocessor'].transform(cleaned_data)
-    feature_names = pipeline.named_steps['preprocessor'].get_feature_names_out().tolist()
 
     try:
         app.logger.debug("Starting predict_proba")
@@ -192,9 +174,8 @@ def get_all_client_info():
     return jsonify(data_dict)
 
 
-
-# if __name__ == "__main__":
-#     app.run()
+if __name__ == "__main__":
+     app.run()
 
 
 
