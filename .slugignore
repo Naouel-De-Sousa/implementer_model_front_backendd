@@ -7,3 +7,5 @@ docs/
 venv/
 nltk_data/
 *.csv
+*.ipynb
+*.md
