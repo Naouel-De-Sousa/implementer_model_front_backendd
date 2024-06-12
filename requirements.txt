@@ -31,7 +31,7 @@ evidently==0.4.25
 exceptiongroup==1.2.1
 Faker==25.2.0
 filelock==3.14.0
-Flask==3.0.3
+Flask==2.0.1
 Flask-Caching==2.1.0
 Flask-Cors==4.0.0
 fonttools==4.51.0
@@ -91,7 +91,7 @@ polyfactory==2.16.0
 prometheus-flask-exporter==0.20.3
 prometheus_client==0.16.0
 prompt-toolkit==3.0.39
-protobuf==5.26.1
+protobuf==4.21.6
 psutil==5.9.5
 pure-eval==0.2.2
 pyarrow==15.0.2
