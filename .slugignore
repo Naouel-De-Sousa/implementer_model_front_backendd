@@ -6,3 +6,7 @@ tests/
 docs/
 venv/
 nltk_data/
+*.csv
+*.pkl
+*.joblib
+*.txt
