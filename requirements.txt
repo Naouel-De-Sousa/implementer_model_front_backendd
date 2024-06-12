@@ -91,7 +91,7 @@ polyfactory==2.16.0
 prometheus-flask-exporter==0.20.3
 prometheus_client==0.16.0
 prompt-toolkit==3.0.39
-protobuf==4.21.6
+protobuf
 psutil==5.9.5
 pure-eval==0.2.2
 pyarrow==15.0.2
