@@ -6,3 +6,4 @@ tests/
 docs/
 venv/
 nltk_data/
+*.csv
