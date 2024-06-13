@@ -13,3 +13,4 @@ nltk_data/
 .vscode/
 .env
 *.pkl
+.nltk/
