@@ -42,7 +42,7 @@ graphene==3.3
 graphql-core==3.2.3
 graphql-relay==3.2.0
 greenlet==3.0.3
-gunicorn==21.2.0
+gunicorn==20.1.0
 h11==0.14.0
 httpcore==1.0.5
 httptools==0.6.1
@@ -159,4 +159,3 @@ websockets==12.0
 Werkzeug==3.0.2
 win-inet-pton==1.1.0
 zipp==3.18.1
-gunicorn==21.2.0
