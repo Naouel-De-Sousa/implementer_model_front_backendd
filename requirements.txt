@@ -27,7 +27,7 @@ distro==1.9.0
 docker==7.0.0
 dynaconf==3.2.5
 entrypoints==0.4
-evidently==0.4.25
+#evidently==0.4.25
 exceptiongroup==1.2.1
 Faker==25.2.0
 filelock==3.14.0
