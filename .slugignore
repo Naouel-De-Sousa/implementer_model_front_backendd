@@ -12,3 +12,4 @@ nltk_data/
 *.log
 .vscode/
 .env
+*.pkl
