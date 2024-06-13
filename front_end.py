@@ -93,7 +93,7 @@ if st.button('Prédire'):
     if client_id_input:
         try:
             client_id_int = int(client_id_input)
-            response = requests.get('http://naouel.pythonanywhere.com/predict',  params={'client_id': client_id_int})
+            response = requests.get('https://monapplicationcredit-433fcfe4121e.herokuapp.com/predict',  params={'client_id': client_id_int})
             if response.status_code == 200:
                 if response.text: # Vérifiez si la réponse n'est pas vide
                     data = response.json()
@@ -134,7 +134,7 @@ else:
 
    
 if 'data' not in st.session_state or st.button('Charger les données'):
-    response = requests.get('http://naouel.pythonanywhere.com/get-all-client-info')
+    response = requests.get('https://monapplicationcredit-433fcfe4121e.herokuapp.com/get-all-client-info')
     if response.status_code == 200:
         all_client_data = response.json()
         df = pd.DataFrame(all_client_data)
