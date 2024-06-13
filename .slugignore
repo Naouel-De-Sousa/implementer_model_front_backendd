@@ -1,16 +1,12 @@
  
 .git/
+data/
+mlflow-artifacts/
+models/
+.ipynb_checkpoints/
+.pytest_cache/
+.vscode/
 __pycache__/
 *.pyc
-tests/
-docs/
-venv/
-nltk_data/
-*.csv
-*.ipynb
-*.md
-*.log
-.vscode/
+*.pyo
 .env
-*.pkl
-.nltk/
