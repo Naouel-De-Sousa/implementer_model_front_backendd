@@ -9,3 +9,6 @@ nltk_data/
 *.csv
 *.ipynb
 *.md
+*.log
+.vscode/
+.env
