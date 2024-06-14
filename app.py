@@ -15,8 +15,17 @@ import matplotlib
 import base64
 import base64
 from io import BytesIO
-from flask import abort
+import logging
 
+
+
+# Configurez le logger
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s',
+                    handlers=[
+                        logging.FileHandler("app.log"),
+                        logging.StreamHandler()
+                    ])
 
 
 pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
