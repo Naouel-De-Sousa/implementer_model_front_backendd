@@ -4,31 +4,24 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from flask import Flask, request, jsonify
-import pickle
 import pandas as pd
 import numpy as np
 import re
 from joblib import load
-from joblib import Parallel, delayed, parallel_backend
-import pdb
 from flask_caching import Cache
 from flask_cors import CORS
 import shap
 import matplotlib
 import base64
-import io
-import requests
-import logging
 import base64
 from io import BytesIO
-import lightgbm as lgb
 from flask import abort
 
 
 
 pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
 
-os.system('python download_files.py')
+#os.system('python download_files.py')
 
 app = Flask(__name__)
 CORS(app)
