@@ -21,7 +21,7 @@ Cette application est une API de prédiction de crédit utilisant Flask pour le 
 - Python 3.9 
 - Flask
 - Streamlit
-- PythonAnywhere
+- Heroku
 
 ## Structure du Projet
 

@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.DEBUG,
 #download_files()
 pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
 
-os.system('python download_files.py')
+#os.system('python download_files.py')
 
 app = Flask(__name__)
 CORS(app)
