@@ -15,16 +15,38 @@ import matplotlib
 import base64
 import base64
 from io import BytesIO
-import logging
+from urllib.parse import quote as url_quote
+import requests
+
+
 #from download_files import download_files  # Import the function
 
 
 
 # Download necessary files
 #download_files()
-pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
+#pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
+#os.system('python download_files.py')
 
-os.system('python download_files.py')
+
+def download_file(url, local_path):
+    # Encodage de l'URL pour gérer les caractères spéciaux
+    encoded_url = url_quote(url, safe=':/')
+    response = requests.get(encoded_url)
+    
+    # Vérification du statut de la réponse
+    if response.status_code == 200:
+        with open(local_path, 'wb') as file:
+            file.write(response.content)
+        print(f"Fichier téléchargé et enregistré sous {local_path}")
+    else:
+        print(f"Erreur lors du téléchargement du fichier depuis {url}. Statut: {response.status_code}")
+
+
+# URLs de vos fichiers sur GitHub (raw URLs)
+csv_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/sample_data_for_model.csv'
+model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
+
 
 app = Flask(__name__)
 CORS(app)
@@ -38,6 +60,9 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 data_path = os.path.abspath('./sample_data_for_model.csv')
 model_path = './models/mon_pipeline_complet.joblib'
 
+# Téléchargez les fichiers
+download_file(csv_url, data_path)
+download_file(model_url, model_path)
 clients_df = pd.read_csv(data_path)
 pipeline = load(model_path)
 
