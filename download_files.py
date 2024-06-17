@@ -1,10 +1,19 @@
-import os
 import requests
+from urllib.parse import quote
 
 def download_file(url, local_path):
-    response = requests.get(url)
-    with open(local_path, 'wb') as file:
-        file.write(response.content)
+    # Encodage de l'URL pour gérer les caractères spéciaux
+    encoded_url = quote(url, safe=':/')
+    response = requests.get(encoded_url)
+    
+    # Vérification du statut de la réponse
+    if response.status_code == 200:
+        with open(local_path, 'wb') as file:
+            file.write(response.content)
+        print(f"Fichier téléchargé et enregistré sous {local_path}")
+    else:
+        print(f"Erreur lors du téléchargement du fichier depuis {url}. Statut: {response.status_code}")
+
 
 # URLs de vos fichiers sur GitHub (raw URLs)
 csv_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/sample_data_for_model.csv'
