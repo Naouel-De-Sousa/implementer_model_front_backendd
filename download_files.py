@@ -1,9 +1,9 @@
 import requests
-from urllib.parse import quote
+from urllib.parse import quote as url_quote
 
 def download_file(url, local_path):
     # Encodage de l'URL pour gérer les caractères spéciaux
-    encoded_url = quote(url, safe=':/')
+    encoded_url = url_quote(url, safe=':/')
     response = requests.get(encoded_url)
     
     # Vérification du statut de la réponse
