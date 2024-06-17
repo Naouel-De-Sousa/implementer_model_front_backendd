@@ -21,6 +21,12 @@ import requests
 
 #from download_files import download_files  # Import the function
 
+app = Flask(__name__)
+CORS(app)
+# Configuration de Flask-Caching
+# Utilise un cache en mémoire
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
+#cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/home/Naouel/cache'})
 
 
 # Download necessary files
@@ -31,9 +37,7 @@ import requests
 
 def download_file(url, local_path):
     # Encodage de l'URL pour gérer les caractères spéciaux
-    encoded_url = url_quote(url, safe=':/')
-    response = requests.get(encoded_url)
-    
+    response = requests.get(url)
     # Vérification du statut de la réponse
     if response.status_code == 200:
         with open(local_path, 'wb') as file:
@@ -48,12 +52,6 @@ csv_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/r
 model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
 
 
-app = Flask(__name__)
-CORS(app)
-# Configuration de Flask-Caching
-# Utilise un cache en mémoire
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})  
-#cache = Cache(app, config={'CACHE_TYPE': 'filesystem', 'CACHE_DIR': '/home/Naouel/cache'})
 
 
 # Chemins de destination locaux
