@@ -1,6 +1,6 @@
 import requests
 from urllib.parse import quote as url_quote
-
+import os
 def download_file(url, local_path):
     # Encodage de l'URL pour gérer les caractères spéciaux
     encoded_url = url_quote(url, safe=':/')
@@ -20,8 +20,8 @@ csv_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/r
 model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
 
 # Chemins locaux où les fichiers seront enregistrés
-csv_local_path = 'sample_data_for_model.csv'
-model_local_path = 'models/mon_pipeline_complet.joblib'
+csv_local_path = os.path.abspath('./sample_data_for_model.csv')
+model_local_path = './models/mon_pipeline_complet.joblib'
 
 # Téléchargez les fichiers
 download_file(csv_url, csv_local_path)

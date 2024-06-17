@@ -20,19 +20,11 @@ import logging
 
 
 
-# Configurez le logger
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s',
-                    handlers=[
-                        logging.FileHandler("app.log"),
-                        logging.StreamHandler()
-                    ])
-
 # Download necessary files
 #download_files()
 pd.set_option('future.no_silent_downcasting', True)# Appel du script pour télécharger les fichiers nécessaires
 
-#os.system('python download_files.py')
+os.system('python download_files.py')
 
 app = Flask(__name__)
 CORS(app)
