@@ -4,5 +4,4 @@
 streamlit run front_end.py &
 
 # Démarrer Flask
-gunicorn app:app --bind 0.0.0.0:$PORT --workers 3
-
+exec gunicorn app:app --bind 0.0.0.0:$PORT --workers 3
