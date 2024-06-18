@@ -3,11 +3,12 @@
 # Run setup script for Streamlit configuration
 sh setup.sh
 
-# Start the Flask app using gunicorn
-gunicorn app:app -b 0.0.0.0:$PORT &
+# Run the Flask app using Gunicorn
+gunicorn -b 0.0.0.0:$PORT app:app &
 
-# Start the Streamlit app
-streamlit run front_end.py --server.port 8501
+# Start the Streamlit server to serve your Streamlit app
+streamlit run front_end.py
+
 
 
 
