@@ -1,12 +1,20 @@
 #!/bin/bash
 
-# Run setup script for Streamlit configuration
+Run setup script for Streamlit configuration
 sh setup.sh
 
-# Run the Flask app using Gunicorn
-gunicorn -b 0.0.0.0:$PORT app:app &
+Detect OS and run the appropriate server
+if [[ "$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "darwin"* ]]; then
+# Unix-like OS, use gunicorn
+gunicorn app
+&
+else
+# Windows OS, use waitress
+python -m waitress app
+&
+fi
 
-# Start the Streamlit server to serve your Streamlit app
+Start the Streamlit server to serve your Streamlit app
 streamlit run front_end.py
 
 
