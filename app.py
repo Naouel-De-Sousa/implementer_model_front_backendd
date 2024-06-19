@@ -17,7 +17,7 @@ import base64
 from io import BytesIO
 from urllib.parse import quote as url_quote
 import requests
-
+from urllib.parse import quote as url_quote
 
 #from download_files import download_files  # Import the function
 
@@ -37,7 +37,9 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 def download_file(url, local_path):
     # Encodage de l'URL pour gérer les caractères spéciaux
-    response = requests.get(url)
+    encoded_url = url_quote(url, safe=':/')
+    response = requests.get(encoded_url)
+    
     # Vérification du statut de la réponse
     if response.status_code == 200:
         with open(local_path, 'wb') as file:
