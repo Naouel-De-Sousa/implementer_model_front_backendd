@@ -48,8 +48,8 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 #     else:
 #         print(f"Erreur lors du téléchargement du fichier depuis {url}. Statut: {response.status_code}")
 # # URLs de vos fichiers sur GitHub (raw URLs)
-# csv_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/sample_data_for_model.csv'
-# model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
+csv_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/sample_data_for_model.csv'
+model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd/raw/master/models/mon_pipeline_complet.joblib'
 
 
 # Chemins de destination locaux
@@ -60,8 +60,8 @@ model_path = './models/mon_pipeline_complet.joblib'
 # download_file(csv_url, data_path)
 # download_file(model_url, model_path)
 
-clients_df = pd.read_csv(data_path)
-pipeline = joblib.load(open(model_path,'rb'))
+clients_df = pd.read_csv(csv_url)
+pipeline = joblib.load(open(model_url,'rb'))
 
 
 
