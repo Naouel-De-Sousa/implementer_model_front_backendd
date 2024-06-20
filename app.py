@@ -54,7 +54,7 @@ model_url = 'https://github.com/Naouel-De-Sousa/implementer_model_front_backendd
 
 # Chemins de destination locaux
 data_path = os.path.abspath('./sample_data_for_model.csv')
-model_path = './models/mon_pipeline_complet.joblib'
+model_path = os.path.abspath('./models/mon_pipeline_complet.joblib')
 
 # # Téléchargez les fichiers
 # download_file(csv_url, data_path)
