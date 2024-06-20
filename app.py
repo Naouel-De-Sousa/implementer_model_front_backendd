@@ -60,8 +60,8 @@ model_path = './models/mon_pipeline_complet.joblib'
 # download_file(csv_url, data_path)
 # download_file(model_url, model_path)
 
-clients_df = pd.read_csv(csv_url)
-pipeline = joblib.load(open(model_url,'rb'))
+clients_df = pd.read_csv(data_path)
+pipeline = joblib.load(model_path)
 
 
 
